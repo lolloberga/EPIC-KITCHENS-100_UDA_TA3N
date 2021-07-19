@@ -23,6 +23,8 @@ from colorama import Fore, Back, Style
 import numpy as np
 from tensorboardX import SummaryWriter
 
+from pathlib import Path
+
 np.random.seed(1)
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
@@ -164,7 +166,10 @@ def main():
     num_source_train = round(num_max_iter * args.batch_size[0]) if args.copy_list[0] == 'Y' else num_source
     num_target_train = round(num_max_iter * args.batch_size[1]) if args.copy_list[1] == 'Y' else num_target
 
-    source_set = TSNDataSet(args.train_source_data + ".pkl", args.train_source_list, num_dataload=num_source_train,
+    train_source_data = Path(args.train_source_data + ".pkl")
+    train_source_list = Path(args.train_source_list)
+    source_set = TSNDataSet(train_source_data, train_source_list,
+                            num_dataload=num_source_train,
                             num_segments=args.num_segments,
                             new_length=data_length, modality=args.modality,
                             image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
@@ -177,7 +182,10 @@ def main():
     source_loader = torch.utils.data.DataLoader(source_set, batch_size=args.batch_size[0], shuffle=False,
                                                 sampler=source_sampler, num_workers=args.workers, pin_memory=True)
 
-    target_set = TSNDataSet(args.train_target_data + ".pkl", args.train_target_list, num_dataload=num_target_train,
+    train_target_data = Path(args.train_target_data + ".pkl")
+    train_target_list = Path(args.train_target_list)
+    target_set = TSNDataSet(train_target_data, train_target_list,
+                            num_dataload=num_target_train,
                             num_segments=args.num_segments,
                             new_length=data_length, modality=args.modality,
                             image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
@@ -339,6 +347,8 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
     model.train()
 
     end = time.time()
+    a = zip(source_loader, target_loader)
+    b = enumerate(a)
     data_loader = enumerate(zip(source_loader, target_loader))
 
     # step info
@@ -994,7 +1004,7 @@ def accuracy(output, target, topk=(1,)):
 
     res = []
     for k in topk:
-        correct_k = correct[:k].view(-1).float().sum(0)
+        correct_k = correct[:k].contiguous().view(-1).float().sum(0)
         res.append(correct_k.mul_(100.0 / batch_size))
     return res
 
