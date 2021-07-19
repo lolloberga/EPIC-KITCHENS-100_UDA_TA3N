@@ -3,19 +3,25 @@ import argparse
 parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
 parser.add_argument('--num_class', type=str, default="97,300")
 parser.add_argument('--modality', type=str, default="ALL")
-                    # choices=['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL'])
+# choices=['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL'])
 parser.add_argument('--train_source_list', type=str,
-                    default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_source_train.pkl")
+                    # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_source_train.pkl")
+                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_source_train.pkl")
 parser.add_argument('--train_target_list', type=str,
-                    default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_train_timestamps.pkl")
+                    # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_train_timestamps.pkl")
+                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_train_timestamps.pkl")
 parser.add_argument('--val_list', type=str,
-                    default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_test_timestamps.pkl")
+                    # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_test_timestamps.pkl")
+                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_test_timestamps.pkl")
 parser.add_argument('--val_data', type=str,
-                    default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
+                    # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
+                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
 parser.add_argument('--train_source_data', type=str,
-                    default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
+                    # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
+                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
 parser.add_argument('--train_target_data', type=str,
-                    default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
+                    # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
+                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
 
 # ========================= Model Configs ==========================
 parser.add_argument('--train_metric', default="all", type=str)
@@ -91,6 +97,7 @@ parser.add_argument('--pretrain_source', default=False, action="store_true",
 parser.add_argument('--epochs', default=30, type=int, metavar='N',
                     help='number of total epochs to run')
 parser.add_argument('-b', '--batch_size', default=[128, 202, 128], type=int, nargs="+",
+                    # parser.add_argument('-b', '--batch_size', default=[64, 101, 64], type=int, nargs="+",
                     metavar='N', help='mini-batch size ([source, target, testing])')
 parser.add_argument('--lr', '--learning_rate', default=3e-3, type=float,
                     metavar='LR', help='initial learning rate')
@@ -120,6 +127,7 @@ parser.add_argument('--verbose', default=False, action="store_true")
 
 # ========================= Runtime Configs ==========================
 parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
+                    # parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
@@ -127,7 +135,7 @@ parser.add_argument('--resume_hp', default=False, action="store_true",
                     help='whether to use the saved hyper-parameters')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
-parser.add_argument('--exp_path', type=str, default="/model/action_model/",
+parser.add_argument('--exp_path', type=str, default="/model/action-model/",
                     help='full path of the experiment folder')
 parser.add_argument('--gpus', nargs='+', type=int, default=None)
 parser.add_argument('--flow_prefix', default="", type=str)
@@ -135,4 +143,4 @@ parser.add_argument('--save_model', default=False, action="store_true")
 parser.add_argument('--save_best_log_val', default="best_val.log", type=str)
 parser.add_argument('--save_best_log_test', default="best_test.log", type=str)
 parser.add_argument('--save_attention', type=int, default=-1)
-parser.add_argument('--tensorboard', dest='tensorboard', action='store_true')
+parser.add_argument('--tensorboard', default=True, dest='tensorboard', action='store_true')
