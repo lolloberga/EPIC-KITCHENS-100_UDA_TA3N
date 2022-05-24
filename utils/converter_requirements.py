@@ -19,6 +19,6 @@ for dep in data['dependencies']:
         for preq in dep.get('pip', []):
             requirements.append(preq)
 
-with open('requirements.txt', 'w') as fp:
+with open('../requirements.txt', 'w') as fp:
     for requirement in requirements:
        print(requirement, file=fp)
