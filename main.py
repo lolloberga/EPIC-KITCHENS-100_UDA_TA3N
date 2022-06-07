@@ -898,7 +898,7 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
             loss_verb = criterion(pred_verb, label_verb)
             #loss_noun = criterion(pred_noun, label_noun)
             if args.train_metric == "all":
-                loss = 0.5 * (loss_verb + loss_noun)
+                loss = 0.5 * loss_verb #* (loss_verb + loss_noun)
             elif args.train_metric == "noun":
                 raise Exception('noun is temporally unavaiable')
                 #loss = loss_noun  # 0.5*(loss_verb+loss_noun)
