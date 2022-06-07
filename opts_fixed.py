@@ -1,31 +1,44 @@
 import argparse
 
-CURRENT_DOMAIN = "D1"
-CURRENT_DA_DOMAIN = "D1-D2"
-# LIST = LABELS, DATA = FEATURES
-# D1 -> D2:
+'''
+LEGENDA:
+* LIST      = LABELS     (train_val)
+* DATA      = FEATURES   (prextracted_model_features)
+* SOURCE    = train
+* TARGET    = test
+'''
+
+CURRENT_DOMAIN      = "D1"
+TARGET_DOMAIN       = "D1"
+CURRENT_MODALITY    = "RGB"         #['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL']
+USE_TARGET          = "none"        #['none', 'Sv', 'uSv']
+FRAME_AGGREGATION   = "trn-m"     #['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none']
+
 parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
+parser.add_argument('--source_domain', type=str, default=CURRENT_DOMAIN)
+parser.add_argument('--target_domain', type=str, default=TARGET_DOMAIN)
+
 parser.add_argument('--num_class', type=str, default="97,300")
-parser.add_argument('--modality', type=str, default="RGB")
+parser.add_argument('--modality', type=str, default=CURRENT_MODALITY)
 # choices=['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL'])
 parser.add_argument('--train_source_list', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_source_train.pkl")
                     default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + CURRENT_DOMAIN + "_train.pkl")
 parser.add_argument('--train_target_list', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_train_timestamps.pkl")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + "D2" + "_train.pkl")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_list', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_test_timestamps.pkl")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + "D2" + "_test.pkl")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/RGB/ek_i3d/" + CURRENT_DA_DOMAIN + "_test")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_tsm/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 parser.add_argument('--train_source_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/RGB/ek_i3d/" + "D1-D1" + "_train")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_tsm/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_train")
 parser.add_argument('--train_target_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/RGB/ek_i3d/" + "D2-D2" + "_train")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_tsm/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 
 # ========================= Model Configs ==========================
 parser.add_argument('--train_metric', default="verb", type=str)
@@ -39,7 +52,7 @@ parser.add_argument('--add_fc', default=1, type=int, metavar='M',
 parser.add_argument('--fc_dim', type=int, default=512, help='dimension of added fc')
 parser.add_argument('--baseline_type', type=str, default='video',
                     choices=['frame', 'video', 'tsn'])
-parser.add_argument('--frame_aggregation', type=str, default='avgpool',
+parser.add_argument('--frame_aggregation', type=str, default=FRAME_AGGREGATION,
                     choices=['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none'],
                     help='aggregation of frame features (none if baseline_type is not video)')
 parser.add_argument('--optimizer', type=str, default='SGD', choices=['SGD', 'Adam'])
@@ -63,7 +76,7 @@ parser.add_argument('--n_ts', type=int, default=5, help='number of temporal segm
 
 # ========================= DA Configs ==========================
 parser.add_argument('--share_params', type=str, default='Y', choices=['Y', 'N'])
-parser.add_argument('--use_target', type=str, default='uSv', choices=['none', 'Sv', 'uSv'],
+parser.add_argument('--use_target', type=str, default=USE_TARGET, choices=['none', 'Sv', 'uSv'],
                     help='the method to use target data (not use | supervised | unsupervised)')
 parser.add_argument('--dis_DA', type=str, default='none', choices=['none', 'DAN', 'JAN', 'CORAL'],
                     help='discrepancy method for DA')
