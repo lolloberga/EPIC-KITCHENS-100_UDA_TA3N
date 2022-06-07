@@ -21,7 +21,10 @@ class VideoRecord(object):
 
     @property
     def segment_id(self):
-        return self._data.narration_id
+        if 'narration_id' in self._data:
+            return self._data.narration_id
+        narration_id = self._data['video_id'] + '_' + str(self._data['uid'])
+        return narration_id
 
     @property
     def path(self):
@@ -33,10 +36,10 @@ class VideoRecord(object):
 
     @property
     def label(self):
-        if ("verb_class" in self._data) and ("noun_class" in self._data):
-            return int(self._data.verb_class), int(self._data.noun_class)
+        if "verb_class" in self._data:  # and ("noun_class" in self._data):
+            return int(self._data.verb_class) #, int(self._data.noun_class)
         else:
-            return 0, 0
+            return 0 #, 0
 
 
 class TSNDataSet(data.Dataset):
@@ -46,6 +49,7 @@ class TSNDataSet(data.Dataset):
                  force_grayscale=False, random_shift=True,
                  test_mode=False, noun_data_path=None):
         self.modality = modality
+        self.data_path = data_path
         try:
             with open(data_path, "rb") as f:
                 data = pickle.load(f)
@@ -104,12 +108,15 @@ class TSNDataSet(data.Dataset):
         return torch.from_numpy(np.expand_dims(self.noun_data[idx][segment - 1], axis=0)).float()
 
     def _load_feature(self, idx, segment):
+        if idx not in self.data:
+            print('error')
+            print(str(self.data_path))
         return torch.from_numpy(np.expand_dims(self.data[idx][segment - 1], axis=0)).float()
 
     def _parse_list(self):
         try:
-            label_file = pd.read_pickle(self.list_file).reset_index()
-            self.labels_available = (("verb_class" in label_file) and ("noun_class" in label_file))
+            label_file = pd.read_pickle(self.list_file)
+            self.labels_available = "verb_class" in label_file #(("verb_class" in label_file) and ("noun_class" in label_file))
         except:
             raise Exception("Cannot read pickle, {},containing labels".format(self.list_file))
         self.video_list = [VideoRecord(i, row[1], self.total_segments) for i, row in enumerate(label_file.iterrows())]
