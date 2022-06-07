@@ -57,6 +57,9 @@ def main():
         if args.use_bn != 'none':
             print(Fore.GREEN + 'Apply the adaptive normalization approach:', args.use_bn)
 
+    print(Fore.YELLOW + 'Current modality:', args.modality)
+    print(Fore.YELLOW + 'From dataset', args.source_domain, Fore.YELLOW + 'to dataset', args.target_domain)
+
     # determine the categories
     # want to allow multi-label classes.
 
