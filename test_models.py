@@ -272,8 +272,8 @@ def validate(val_loader, verb_model, criterion, num_class, noun_model=None, val_
 			val_data = dummyData(batch_val_ori,val_size_ori,val_data_all)
 
 
-		val_label_verb = val_label[0].cuda(non_blocking=True)
-		val_label_noun = val_label[1].cuda(non_blocking=True)
+		val_label_verb = val_label[0].cpu()
+		val_label_noun = val_label[1].cpu()
 		with torch.no_grad():
 
 			if args.baseline_type == 'frame':
