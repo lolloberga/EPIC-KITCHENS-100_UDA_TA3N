@@ -95,7 +95,7 @@ def main():
                        use_attn=args.use_attn, n_attn=args.n_attn, use_attn_frame=args.use_attn_frame,
                        verbose=args.verbose, share_params=args.share_params)
 
-    model = torch.nn.DataParallel(model, args.gpus).cuda()
+    model = torch.nn.DataParallel(model, args.gpus).cpu()
 
     if args.optimizer == 'SGD':
         print(Fore.YELLOW + 'using SGD')
@@ -171,6 +171,7 @@ def main():
     source_set = TSNDataSet(train_source_data, train_source_list,
                             num_dataload=num_source_train,
                             num_segments=args.num_segments,
+                            total_segments=5,
                             new_length=data_length, modality=args.modality,
                             image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
                                                                             "RGBDiffplus"] else args.flow_prefix + "{}_{:05d}.t7",
@@ -187,6 +188,7 @@ def main():
     target_set = TSNDataSet(train_target_data, train_target_list,
                             num_dataload=num_target_train,
                             num_segments=args.num_segments,
+                            total_segments=5,
                             new_length=data_length, modality=args.modality,
                             image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
                                                                             "RGBDiffplus"] else args.flow_prefix + "{}_{:05d}.t7",
@@ -201,8 +203,8 @@ def main():
     # --- Optimizer ---#
     # define loss function (criterion) and optimizer
     if args.loss_type == 'nll':
-        criterion = torch.nn.CrossEntropyLoss().cuda()
-        criterion_domain = torch.nn.CrossEntropyLoss().cuda()
+        criterion = torch.nn.CrossEntropyLoss().cpu()
+        criterion_domain = torch.nn.CrossEntropyLoss().cpu()
     else:
         raise ValueError("Unknown loss type")
 
@@ -358,16 +360,16 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
     # initialize the embedding
     if args.tensorboard:
         feat_source_display = None
-        feat_source_display_noun = None
+        #feat_source_display_noun = None
         feat_source_display_verb = None
         label_source_verb_display = None
         label_source_noun_display = None
         label_source_domain_display = None
 
         feat_target_display = None
-        feat_target_display_noun = None
+        #feat_target_display_noun = None
         feat_target_display_verb = None
-        label_target_noun_display = None
+        #label_target_noun_display = None
         label_target_verb_display = None
         label_target_domain_display = None
 
@@ -398,37 +400,37 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
             target_data = torch.cat((target_data, target_data_dummy))
 
         # add dummy tensors to make sure batch size can be divided by gpu #
-        if source_data.size(0) % gpu_count != 0:
+        '''if source_data.size(0) % gpu_count != 0:
             source_data_dummy = torch.zeros(gpu_count - source_data.size(0) % gpu_count, source_data.size(1),
                                             source_data.size(2))
             source_data = torch.cat((source_data, source_data_dummy))
         if target_data.size(0) % gpu_count != 0:
             target_data_dummy = torch.zeros(gpu_count - target_data.size(0) % gpu_count, target_data.size(1),
                                             target_data.size(2))
-            target_data = torch.cat((target_data, target_data_dummy))
+            target_data = torch.cat((target_data, target_data_dummy))'''
 
         # measure data loading time
         data_time.update(time.time() - end)
 
-        source_label_verb = source_label[0].cuda(non_blocking=True)  # pytorch 0.4.X
-        source_label_noun = source_label[1].cuda(non_blocking=True)  # pytorch 0.4.X
+        source_label_verb = source_label.cpu()  # pytorch 0.4.X
+        #source_label_noun = source_label[1].cpu()  # pytorch 0.4.X
 
-        target_label_verb = target_label[0].cuda(non_blocking=True)  # pytorch 0.4.X
-        target_label_noun = target_label[1].cuda(non_blocking=True)  # pytorch 0.4.X
+        target_label_verb = target_label.cpu()  # pytorch 0.4.X
+        #target_label_noun = target_label[1].cpu()  # pytorch 0.4.X
 
         if args.baseline_type == 'frame':
             source_label_verb_frame = source_label_verb.unsqueeze(1).repeat(1, args.num_segments).view(
                 -1)  # expand the size for all the frames
-            source_label_noun_frame = source_label_noun.unsqueeze(1).repeat(1, args.num_segments).view(
-                -1)  # expand the size for all the frames
+            #source_label_noun_frame = source_label_noun.unsqueeze(1).repeat(1, args.num_segments).view(
+                #-1)  # expand the size for all the frames
             target_label_verb_frame = target_label_verb.unsqueeze(1).repeat(1, args.num_segments).view(-1)
-            target_label_noun_frame = target_label_noun.unsqueeze(1).repeat(1, args.num_segments).view(-1)
+            #target_label_noun_frame = target_label_noun.unsqueeze(1).repeat(1, args.num_segments).view(-1)
 
         label_source_verb = source_label_verb_frame if args.baseline_type == 'frame' else source_label_verb  # determine the label for calculating the loss function
         label_target_verb = target_label_verb_frame if args.baseline_type == 'frame' else target_label_verb
 
-        label_source_noun = source_label_noun_frame if args.baseline_type == 'frame' else source_label_noun  # determine the label for calculating the loss function
-        label_target_noun = target_label_noun_frame if args.baseline_type == 'frame' else target_label_noun
+        #label_source_noun = source_label_noun_frame if args.baseline_type == 'frame' else source_label_noun  # determine the label for calculating the loss function
+        #label_target_noun = target_label_noun_frame if args.baseline_type == 'frame' else target_label_noun
         # ====== pre-train source data ======#
         if args.pretrain_source:
             # ------ forward pass data again ------#
@@ -445,15 +447,16 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
             out_verb = out_source_verb
             out_noun = out_source_noun
             label_verb = label_source_verb
-            label_noun = label_source_noun
+            #label_noun = label_source_noun
 
             # MCD not used
             loss_verb = criterion(out_verb, label_verb)
-            loss_noun = criterion(out_noun, label_noun)
+            #loss_noun = criterion(out_noun, label_noun)
             if args.train_metric == "all":
-                loss = 0.5 * (loss_verb + loss_noun)
+                loss = 0.5 * loss_verb #(loss_verb + loss_noun)
             elif args.train_metric == "noun":
-                loss = loss_noun  # 0.5*(loss_verb+loss_noun)
+                raise Exception('noun was temporarily disable')
+                #loss = loss_noun  0.5*(loss_verb+loss_noun)
             elif args.train_metric == "verb":
                 loss = loss_verb  # 0.5*(loss_verb+loss_noun)
             else:
@@ -495,16 +498,16 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
 
         # store the embedding
         if args.tensorboard:
-            feat_source_display_noun = feat_source[0] if i == 0 else torch.cat(
-                (feat_source_display_noun, feat_source[0]), 0)
+            '''feat_source_display_noun = feat_source[0] if i == 0 else torch.cat(
+                (feat_source_display_noun, feat_source[0]), 0)'''
             feat_source_display_verb = feat_source[1] if i == 0 else torch.cat(
                 (feat_source_display_verb, feat_source[1]), 0)
             feat_source_display = feat_source[2] if i == 0 else torch.cat((feat_source_display, feat_source[2]), 0)
 
             label_source_verb_display = label_source_verb if i == 0 else torch.cat(
                 (label_source_verb_display, label_source_verb), 0)
-            label_source_noun_display = label_source_noun if i == 0 else torch.cat(
-                (label_source_noun_display, label_source_noun), 0)
+            '''label_source_noun_display = label_source_noun if i == 0 else torch.cat(
+                (label_source_noun_display, label_source_noun), 0)'''
             label_source_domain_display = torch.zeros(label_source_verb.size(0)) if i == 0 else torch.cat(
                 (label_source_domain_display, torch.zeros(label_source_verb.size(0))), 0)
 
@@ -516,8 +519,8 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
 
             label_target_verb_display = label_target_verb if i == 0 else torch.cat(
                 (label_target_verb_display, label_target_verb), 0)
-            label_target_noun_display = label_target_noun if i == 0 else torch.cat(
-                (label_target_noun_display, label_target_noun), 0)
+            '''label_target_noun_display = label_target_noun if i == 0 else torch.cat(
+                (label_target_noun_display, label_target_noun), 0)'''
             label_target_domain_display = torch.ones(label_target_verb.size(0)) if i == 0 else torch.cat(
                 (label_target_domain_display, torch.ones(label_target_verb.size(0))), 0)
 
@@ -526,7 +529,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         out_verb = out_source[0]
         out_noun = out_source[1]
         label_verb = label_source_verb
-        label_noun = label_source_noun
+        #label_noun = label_source_noun
 
         # Sv not used
         # if args.use_target == 'Sv':
@@ -534,11 +537,12 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         #	label = torch.cat((label, label_target))
 
         loss_verb = criterion(out_verb, label_verb)
-        loss_noun = criterion(out_noun, label_noun)
+        #loss_noun = criterion(out_noun, label_noun)
         if args.train_metric == "all":
-            loss_classification = 0.5 * (loss_verb + loss_noun)
+            loss_classification = 0.5 * loss_verb#(loss_verb + loss_noun)
         elif args.train_metric == "noun":
-            loss_classification = loss_noun  # 0.5*(loss_verb+loss_noun)
+            raise Exception('noun was temporarily disable')
+            #loss_classification = loss_noun  # 0.5*(loss_verb+loss_noun)
         elif args.train_metric == "verb":
             loss_classification = loss_verb  # 0.5*(loss_verb+loss_noun)
         else:
@@ -549,7 +553,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         #	loss_classification += criterion(out_source_2, label)
 
         losses_c_verb.update(loss_verb.item(), out_verb.size(0))  # pytorch 0.4.X
-        losses_c_noun.update(loss_noun.item(), out_noun.size(0))  # pytorch 0.4.X
+        #losses_c_noun.update(loss_noun.item(), out_noun.size(0))  # pytorch 0.4.X
         loss = loss_classification
         losses_c.update(loss_classification.item(), out_verb.size(0))
 
@@ -630,7 +634,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                     target_domain_label = torch.ones(pred_domain_target_single.size(0)).long()
                     domain_label = torch.cat((source_domain_label, target_domain_label), 0)
 
-                    domain_label = domain_label.cuda(non_blocking=True)
+                    domain_label = domain_label.cpu()
 
                     pred_domain = torch.cat((pred_domain_source_single, pred_domain_target_single), 0)
                     pred_domain_all.append(pred_domain)
@@ -649,13 +653,14 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         # 1. entropy loss for target data
         if args.add_loss_DA == 'target_entropy' and args.use_target != 'none':
             loss_entropy_verb = cross_entropy_soft(out_target[0])
-            loss_entropy_noun = cross_entropy_soft(out_target[1])
+            #loss_entropy_noun = cross_entropy_soft(out_target[1])
             losses_e_verb.update(loss_entropy_verb.item(), out_target[0].size(0))
-            losses_e_noun.update(loss_entropy_noun.item(), out_target[1].size(0))
+            #losses_e_noun.update(loss_entropy_noun.item(), out_target[1].size(0))
             if args.train_metric == "all":
-                loss += gamma * 0.5 * (loss_entropy_verb + loss_entropy_noun)
+                loss += gamma * 0.5 * loss_entropy_verb #(loss_entropy_verb + loss_entropy_noun)
             elif args.train_metric == "noun":
-                loss += gamma * loss_entropy_noun
+                raise Exception('noun was temporarily disable')
+                #loss += gamma * loss_entropy_noun
             elif args.train_metric == "verb":
                 loss += gamma * loss_entropy_verb
             else:
@@ -677,13 +682,14 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         # 3. attentive entropy loss
         if args.add_loss_DA == 'attentive_entropy' and args.use_attn != 'none' and args.use_target != 'none':
             loss_entropy_verb = attentive_entropy(torch.cat((out_verb, out_target[0]), 0), pred_domain_all[1])
-            loss_entropy_noun = attentive_entropy(torch.cat((out_noun, out_target[1]), 0), pred_domain_all[1])
+            #loss_entropy_noun = attentive_entropy(torch.cat((out_noun, out_target[1]), 0), pred_domain_all[1])
             losses_e_verb.update(loss_entropy_verb.item(), out_target[0].size(0))
-            losses_e_noun.update(loss_entropy_noun.item(), out_target[1].size(0))
+            #losses_e_noun.update(loss_entropy_noun.item(), out_target[1].size(0))
             if args.train_metric == "all":
-                loss += gamma * 0.5 * (loss_entropy_verb + loss_entropy_noun)
+                loss += gamma * 0.5 * loss_entropy_verb #(loss_entropy_verb + loss_entropy_noun)
             elif args.train_metric == "noun":
-                loss += gamma * loss_entropy_noun
+                raise Exception('noun was temporarily disable')
+                #loss += gamma * loss_entropy_noun
             elif args.train_metric == "verb":
                 loss += gamma * loss_entropy_verb
             else:
@@ -693,17 +699,17 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         pred_verb = out_verb
         prec1_verb, prec5_verb = accuracy(pred_verb.data, label_verb, topk=(1, 5))
         pred_noun = out_noun
-        prec1_noun, prec5_noun = accuracy(pred_noun.data, label_noun, topk=(1, 5))
-        prec1_action, prec5_action = multitask_accuracy((pred_verb.data, pred_noun.data), (label_verb, label_noun),
-                                                        topk=(1, 5))
+        #prec1_noun, prec5_noun = accuracy(pred_noun.data, label_noun, topk=(1, 5))
+        #prec1_action, prec5_action = multitask_accuracy((pred_verb.data, pred_noun.data), (label_verb, label_noun),
+                                                        #topk=(1, 5))
 
         losses.update(loss.item())
         top1_verb.update(prec1_verb.item(), out_verb.size(0))
         top5_verb.update(prec5_verb.item(), out_verb.size(0))
-        top1_noun.update(prec1_noun.item(), out_noun.size(0))
-        top5_noun.update(prec5_noun.item(), out_noun.size(0))
-        top1_action.update(prec1_action, out_noun.size(0))
-        top5_action.update(prec5_action, out_noun.size(0))
+        #top1_noun.update(prec1_noun.item(), out_noun.size(0))
+        #top5_noun.update(prec5_noun.item(), out_noun.size(0))
+        #top1_action.update(prec1_action, out_noun.size(0))
+        #top5_action.update(prec5_action, out_noun.size(0))
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
@@ -722,6 +728,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         end = time.time()
 
         if i % args.print_freq == 0:
+            ''' backup line with nouns
             line = 'Train: [{0}][{1}/{2}], lr: {lr:.5f}\t' + \
                    'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t' + \
                    'Data {data_time.val:.3f} ({data_time.avg:.3f})\t' + \
@@ -730,6 +737,15 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                    'Prec@1 {top1_action.val:.3f} ({top1_action.avg:.3f})\t' + \
                    'Prec@5 {top5_verb.val:.3f} ({top5_verb.avg:.3f})\t' + \
                    'Prec@5 {top5_noun.val:.3f} ({top5_noun.avg:.3f})\t' + \
+                   'Prec@5 {top5_action.val:.3f} ({top5_action.avg:.3f})\t' + \
+                   'Loss {loss.val:.4f} ({loss.avg:.4f})   loss_verb {loss_verb.avg:.4f}   loss_noun {loss_noun.avg:.4f}\t'
+            '''
+            line = 'Train: [{0}][{1}/{2}], lr: {lr:.5f}\t' + \
+                   'Time {batch_time.val:.3f} ({batch_time.avg:.3f})\t' + \
+                   'Data {data_time.val:.3f} ({data_time.avg:.3f})\t' + \
+                   'Prec@1 {top1_verb.val:.3f} ({top1_verb.avg:.3f})\t' + \
+                   'Prec@1 {top1_action.val:.3f} ({top1_action.avg:.3f})\t' + \
+                   'Prec@5 {top5_verb.val:.3f} ({top5_verb.avg:.3f})\t' + \
                    'Prec@5 {top5_action.val:.3f} ({top5_action.avg:.3f})\t' + \
                    'Loss {loss.val:.4f} ({loss.avg:.4f})   loss_verb {loss_verb.avg:.4f}   loss_noun {loss_noun.avg:.4f}\t'
 
@@ -748,9 +764,16 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
             line = line.format(
                 epoch, i, len(source_loader), batch_time=batch_time, data_time=data_time, alpha=alpha, beta=beta_new,
                 gamma=gamma, mu=mu,
-                loss=losses, loss_verb=losses_c_verb, loss_noun=losses_c_noun, loss_d=losses_d, loss_a=losses_a,
-                loss_e_verb=losses_e_verb, loss_e_noun=losses_e_noun, loss_s=losses_s, top1_verb=top1_verb,
-                top1_noun=top1_noun, top5_verb=top5_verb, top5_noun=top5_noun, top1_action=top1_action,
+                loss=losses, loss_verb=losses_c_verb,
+                loss_noun=losses_c_noun,
+                loss_d=losses_d, loss_a=losses_a,
+                loss_e_verb=losses_e_verb,
+                loss_e_noun=losses_e_noun,
+                loss_s=losses_s, top1_verb=top1_verb,
+                top1_noun=top1_noun,
+                top5_verb=top5_verb,
+                top5_noun=top5_noun,
+                top1_action=top1_action,
                 top5_action=top5_action,
                 lr=optimizer.param_groups[0]['lr'])
 
@@ -776,9 +799,9 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         # embedding
 
         writer_train.add_scalar("loss/verb", losses_c_verb.avg, epoch)
-        writer_train.add_scalar("loss/noun", losses_c_noun.avg, epoch)
+        #writer_train.add_scalar("loss/noun", losses_c_noun.avg, epoch)
         writer_train.add_scalar("acc/verb", top1_verb.avg, epoch)
-        writer_train.add_scalar("acc/noun", top1_noun.avg, epoch)
+        #writer_train.add_scalar("acc/noun", top1_noun.avg, epoch)
         writer_train.add_scalar("acc/action", top1_action.avg, epoch)
         if args.adv_DA != 'none' and args.use_target != 'none':
             writer_train.add_scalar("loss/domain", loss_adversarial, epoch)
@@ -825,19 +848,19 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
             val_data = torch.cat((val_data, val_data_dummy))
 
         # add dummy tensors to make sure batch size can be divided by gpu #
-        if val_data.size(0) % gpu_count != 0:
+        '''if val_data.size(0) % gpu_count != 0:
             val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2))
-            val_data = torch.cat((val_data, val_data_dummy))
+            val_data = torch.cat((val_data, val_data_dummy))'''
 
-        val_label_verb = val_label[0].cuda(non_blocking=True)
-        val_label_noun = val_label[1].cuda(non_blocking=True)
+        val_label_verb = val_label.cpu()
+        #val_label_noun = val_label[1].cpu()
         with torch.no_grad():
 
             if args.baseline_type == 'frame':
                 val_label_verb_frame = val_label_verb.unsqueeze(1).repeat(1, args.num_segments).view(
                     -1)  # expand the size for all the frames
-                val_label_noun_frame = val_label_noun.unsqueeze(1).repeat(1, args.num_segments).view(
-                    -1)  # expand the size for all the frames
+                #val_label_noun_frame = val_label_noun.unsqueeze(1).repeat(1, args.num_segments).view(
+                    #-1)  # expand the size for all the frames
 
             # compute output
             _, _, _, _, _, attn_val, out_val, out_val_2, pred_domain_val, feat_val = model(val_data, val_data,
@@ -852,13 +875,13 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
 
             # measure accuracy and record loss
             label_verb = val_label_verb_frame if args.baseline_type == 'frame' else val_label_verb
-            label_noun = val_label_noun_frame if args.baseline_type == 'frame' else val_label_noun
+            #label_noun = val_label_noun_frame if args.baseline_type == 'frame' else val_label_noun
 
             # store the embedding
             if args.tensorboard:
                 feat_val_display = feat_val[1] if i == 0 else torch.cat((feat_val_display, feat_val[1]), 0)
                 label_val_verb_display = label_verb if i == 0 else torch.cat((label_val_verb_display, label_verb), 0)
-                label_val_noun_display = label_noun if i == 0 else torch.cat((label_val_noun_display, label_noun), 0)
+                #label_val_noun_display = label_noun if i == 0 else torch.cat((label_val_noun_display, label_noun), 0)
 
             pred_verb = out_val[0]
             pred_noun = out_val[1]
@@ -870,27 +893,28 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
                     dim=1)  # average all the segments (needed when num_segments != val_segments)
 
             loss_verb = criterion(pred_verb, label_verb)
-            loss_noun = criterion(pred_noun, label_noun)
+            #loss_noun = criterion(pred_noun, label_noun)
             if args.train_metric == "all":
                 loss = 0.5 * (loss_verb + loss_noun)
             elif args.train_metric == "noun":
-                loss = loss_noun  # 0.5*(loss_verb+loss_noun)
+                raise Exception('noun is temporally unavaiable')
+                #loss = loss_noun  # 0.5*(loss_verb+loss_noun)
             elif args.train_metric == "verb":
                 loss = loss_verb  # 0.5*(loss_verb+loss_noun)
             else:
                 raise Exception("invalid metric to train")
             prec1_verb, prec5_verb = accuracy(pred_verb.data, label_verb, topk=(1, 5))
-            prec1_noun, prec5_noun = accuracy(pred_noun.data, label_noun, topk=(1, 5))
-            prec1_action, prec5_action = multitask_accuracy((pred_verb.data, pred_noun.data), (label_verb, label_noun),
-                                                            topk=(1, 5))
+            #prec1_noun, prec5_noun = accuracy(pred_noun.data, label_noun, topk=(1, 5))
+            #prec1_action, prec5_action = multitask_accuracy((pred_verb.data, pred_noun.data), (label_verb, label_noun),
+                                                            #topk=(1, 5))
 
             losses.update(loss.item(), out_val[0].size(0))
             top1_verb.update(prec1_verb.item(), out_val[0].size(0))
             top5_verb.update(prec5_verb.item(), out_val[0].size(0))
-            top1_noun.update(prec1_noun.item(), out_val[1].size(0))
-            top5_noun.update(prec5_noun.item(), out_val[1].size(0))
-            top1_action.update(prec1_action, out_val[1].size(0))
-            top5_action.update(prec5_action, out_val[1].size(0))
+            #top1_noun.update(prec1_noun.item(), out_val[1].size(0))
+            #top5_noun.update(prec5_noun.item(), out_val[1].size(0))
+            #top1_action.update(prec1_action, out_val[1].size(0))
+            #top5_action.update(prec5_action, out_val[1].size(0))
 
             # measure elapsed time
             batch_time.update(time.time() - end)
