@@ -1,30 +1,34 @@
 import argparse
 
+CURRENT_DOMAIN = "D1"
+CURRENT_DA_DOMAIN = "D1-D2"
+# LIST = LABELS, DATA = FEATURES
+# D1 -> D2:
 parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
 parser.add_argument('--num_class', type=str, default="97,300")
-parser.add_argument('--modality', type=str, default="ALL")
+parser.add_argument('--modality', type=str, default="RGB")
 # choices=['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL'])
 parser.add_argument('--train_source_list', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_source_train.pkl")
-                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_source_train.pkl")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + CURRENT_DOMAIN + "_train.pkl")
 parser.add_argument('--train_target_list', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_train_timestamps.pkl")
-                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_train_timestamps.pkl")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + "D2" + "_train.pkl")
 parser.add_argument('--val_list', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_test_timestamps.pkl")
-                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_test_timestamps.pkl")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + "D2" + "_test.pkl")
 parser.add_argument('--val_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/RGB/ek_i3d/" + CURRENT_DA_DOMAIN + "_test")
 parser.add_argument('--train_source_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
-                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/RGB/ek_i3d/" + "D1-D1" + "_train")
 parser.add_argument('--train_target_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                    default="/shared/tale2/Shared/data/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/RGB/ek_i3d/" + "D2-D2" + "_train")
 
 # ========================= Model Configs ==========================
-parser.add_argument('--train_metric', default="all", type=str)
+parser.add_argument('--train_metric', default="verb", type=str)
 parser.add_argument('--dann_warmup', default=False, action="store_true")
 parser.add_argument('--arch', type=str, default="TBN")
 parser.add_argument('--pretrained', type=str, default="none")
@@ -35,7 +39,7 @@ parser.add_argument('--add_fc', default=1, type=int, metavar='M',
 parser.add_argument('--fc_dim', type=int, default=512, help='dimension of added fc')
 parser.add_argument('--baseline_type', type=str, default='video',
                     choices=['frame', 'video', 'tsn'])
-parser.add_argument('--frame_aggregation', type=str, default='trn-m',
+parser.add_argument('--frame_aggregation', type=str, default='avgpool',
                     choices=['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none'],
                     help='aggregation of frame features (none if baseline_type is not video)')
 parser.add_argument('--optimizer', type=str, default='SGD', choices=['SGD', 'Adam'])
@@ -117,16 +121,16 @@ parser.add_argument('--copy_list', default=['N', 'N'], type=str, nargs="+",
                     help='duplicate data in case the dataset is relatively small ([copy source list, copy target list])')
 
 # ========================= Monitor Configs ==========================
-parser.add_argument('--print_freq', '-pf', default=50, type=int,
+parser.add_argument('--print_freq', '-pf', default=10, type=int,
                     metavar='N', help='frequency for printing to text files (default: 10)')
 parser.add_argument('--show_freq', '-sf', default=50, type=int,
                     metavar='N', help='frequency for showing on the screen (default: 10)')
-parser.add_argument('--eval_freq', '-ef', default=1, type=int,
+parser.add_argument('--eval_freq', '-ef', default=5, type=int,
                     metavar='N', help='evaluation frequency (default: 5)')
 parser.add_argument('--verbose', default=False, action="store_true")
 
 # ========================= Runtime Configs ==========================
-parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     # parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--resume', default='', type=str, metavar='PATH',
@@ -135,7 +139,7 @@ parser.add_argument('--resume_hp', default=False, action="store_true",
                     help='whether to use the saved hyper-parameters')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
-parser.add_argument('--exp_path', type=str, default="/model/action-model/",
+parser.add_argument('--exp_path', type=str, default="/Users/lorenzo/University/Polito/ML and DL/EPIC-KITCHENS-100_UDA_TA3N/model/action-model/",
                     help='full path of the experiment folder')
 parser.add_argument('--gpus', nargs='+', type=int, default=None)
 parser.add_argument('--flow_prefix', default="", type=str)
