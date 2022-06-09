@@ -10,9 +10,10 @@ LEGENDA:
 
 CURRENT_DOMAIN      = "D1"
 TARGET_DOMAIN       = "D1"
-CURRENT_MODALITY    = "RGB"         #['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL']
+CURRENT_MODALITY    = "Flow"         #['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL']
 USE_TARGET          = "none"        #['none', 'Sv', 'uSv']
-FRAME_AGGREGATION   = "trn-m"     #['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none']
+FRAME_AGGREGATION   = "avgpool"     #['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none']
+ARCH                = "i3d"         #['i3d', 'TBN', 'TSM'], default TBN
 
 parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
 parser.add_argument('--source_domain', type=str, default=CURRENT_DOMAIN)
@@ -32,18 +33,21 @@ parser.add_argument('--val_list', type=str,
                     default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_tsm/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/"
+                            + CURRENT_MODALITY + "/ek_" + ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 parser.add_argument('--train_source_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_tsm/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_train")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/"
+                            + CURRENT_MODALITY + "/ek_" + ARCH + "/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train")
 parser.add_argument('--train_target_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_tsm/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
+                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/"
+                            + CURRENT_MODALITY + "/ek_" + ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 
 # ========================= Model Configs ==========================
 parser.add_argument('--train_metric', default="verb", type=str)
 parser.add_argument('--dann_warmup', default=False, action="store_true")
-parser.add_argument('--arch', type=str, default="TBN")
+parser.add_argument('--arch', type=str, default=ARCH)
 parser.add_argument('--pretrained', type=str, default="none")
 parser.add_argument('--num_segments', type=int, default=5)
 parser.add_argument('--val_segments', type=int, default=5)
@@ -87,10 +91,10 @@ parser.add_argument('--use_bn', type=str, default='none', choices=['none', 'AdaB
 parser.add_argument('--ens_DA', type=str, default='none', choices=['none', 'MCD'], help='ensembling-based methods')
 parser.add_argument('--use_attn_frame', type=str, default='none',
                     choices=['none', 'TransAttn', 'general', 'DotProduct'], help='attention-mechanism for frames only')
-parser.add_argument('--use_attn', type=str, default='TransAttn', choices=['none', 'TransAttn', 'general', 'DotProduct'],
+parser.add_argument('--use_attn', type=str, default='none', choices=['none', 'TransAttn', 'general', 'DotProduct'],
                     help='attention-mechanism')
 parser.add_argument('--n_attn', type=int, default=1, help='number of discriminators for transferable attention')
-parser.add_argument('--add_loss_DA', type=str, default='attentive_entropy',
+parser.add_argument('--add_loss_DA', type=str, default='none',
                     choices=['none', 'target_entropy', 'attentive_entropy'],
                     help='add more loss functions for DA')
 parser.add_argument('--pred_normalize', type=str, default='N', choices=['Y', 'N'])
@@ -105,7 +109,7 @@ parser.add_argument('--mu', default=0, type=float, metavar='M',
 parser.add_argument('--weighted_class_loss_DA', type=str, default='N', choices=['Y', 'N'])
 parser.add_argument('--place_dis', default=['N', 'Y', 'N'], type=str, nargs="+",
                     metavar='N', help='where to place the discrepancy loss (length = add_fc + 2)')
-parser.add_argument('--place_adv', default=['Y', 'Y', 'Y'], type=str, nargs="+",
+parser.add_argument('--place_adv', default=['N', 'Y', 'Y'], type=str, nargs="+",
                     metavar='N', help='[video relation-based adv, video-based adv, frame-based adv]')
 
 # ========================= Learning Configs ==========================
