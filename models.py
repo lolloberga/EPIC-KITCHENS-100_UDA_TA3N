@@ -123,8 +123,10 @@ class VideoModel(nn.Module):
 			self.feature_dim = model_test.fc7.in_features
 		elif base_model == "TBN" and modality=="ALL":
 			self.feature_dim = 3072
-		elif base_model == "TBN":
+		elif base_model == "TBN" or base_model == 'i3d':
 			self.feature_dim = 1024
+		elif base_model == "TSM":
+			self.feature_dim = 2048
 		else:
 			model_test = getattr(torchvision.models, base_model)(True) # model_test is only used for getting the dim #
 			self.feature_dim = model_test.fc.in_features
@@ -707,7 +709,7 @@ class VideoModel(nn.Module):
 			feat_fc_video_target = GradReverse.apply(feat_fc_video_target, mu)
 
 		pred_fc_video_source = (self.fc_classifier_video_verb_source(feat_fc_video_source), self.fc_classifier_video_noun_source(feat_fc_video_source))
-		pred_fc_video_target = (self.fc_classifier_video_verb_target(feat_fc_video_target) if self.share_params == 'N' else self.fc_classifier_video_verb_source(feat_fc_video_target),
+		pred_fc_video_target = (self.fc_classifier_video_verb_target(feat_fc_video_target) if self.share_params == 'N' else self.fc_classifier_video_verb_source(torch.nn.functional.normalize(feat_fc_video_target)),
 									 self.fc_classifier_video_noun_target(feat_fc_video_target) if self.share_params == 'N' else self.fc_classifier_video_noun_source(feat_fc_video_target))
 
 		if self.baseline_type == 'video': # only store the prediction from classifier 1 (for now)
