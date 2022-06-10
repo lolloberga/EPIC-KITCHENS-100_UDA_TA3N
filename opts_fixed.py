@@ -8,8 +8,8 @@ LEGENDA:
 * TARGET    = test
 '''
 
-CURRENT_DOMAIN      = "D1"
-TARGET_DOMAIN       = "D1"
+CURRENT_DOMAIN      = "D3"
+TARGET_DOMAIN       = "D3"
 CURRENT_MODALITY    = "Flow"         #['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL']
 USE_TARGET          = "none"        #['none', 'Sv', 'uSv']
 FRAME_AGGREGATION   = "avgpool"     #['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none']
@@ -19,7 +19,7 @@ parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal
 parser.add_argument('--source_domain', type=str, default=CURRENT_DOMAIN)
 parser.add_argument('--target_domain', type=str, default=TARGET_DOMAIN)
 
-parser.add_argument('--num_class', type=str, default="97,300")
+parser.add_argument('--num_class', type=str, default="8,8")
 parser.add_argument('--modality', type=str, default=CURRENT_MODALITY)
 # choices=['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL'])
 parser.add_argument('--train_source_list', type=str,
@@ -138,11 +138,11 @@ parser.add_argument('--copy_list', default=['N', 'N'], type=str, nargs="+",
                     help='duplicate data in case the dataset is relatively small ([copy source list, copy target list])')
 
 # ========================= Monitor Configs ==========================
-parser.add_argument('--print_freq', '-pf', default=10, type=int,
+parser.add_argument('--print_freq', '-pf', default=1, type=int,
                     metavar='N', help='frequency for printing to text files (default: 10)')
-parser.add_argument('--show_freq', '-sf', default=50, type=int,
+parser.add_argument('--show_freq', '-sf', default=1, type=int,
                     metavar='N', help='frequency for showing on the screen (default: 10)')
-parser.add_argument('--eval_freq', '-ef', default=5, type=int,
+parser.add_argument('--eval_freq', '-ef', default=1, type=int,
                     metavar='N', help='evaluation frequency (default: 5)')
 parser.add_argument('--verbose', default=False, action="store_true")
 
