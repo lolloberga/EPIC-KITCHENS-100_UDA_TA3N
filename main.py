@@ -41,6 +41,8 @@ def main():
 
     print(Fore.GREEN + 'Baseline:', args.baseline_type)
     print(Fore.GREEN + 'Frame aggregation method:', args.frame_aggregation)
+    print(Fore.GREEN + 'Current architecture:', args.arch)
+    print(Fore.GREEN + 'Num class:', args.num_class)
 
     print(Fore.GREEN + 'target data usage:', args.use_target)
     if args.use_target == 'none':
@@ -59,6 +61,15 @@ def main():
 
     print(Fore.YELLOW + 'Current modality:', args.modality)
     print(Fore.YELLOW + 'From dataset', args.source_domain, Fore.YELLOW + 'to dataset', args.target_domain)
+
+    print("------------------------------")
+    print(Fore.GREEN + 'val list:', args.val_list)
+    print(Fore.GREEN + 'train source list:', args.train_source_list)
+    print(Fore.GREEN + 'train target list:', args.train_target_list)
+    print(Fore.GREEN + 'val data:', args.val_data)
+    print(Fore.GREEN + 'train source data:', args.train_source_data)
+    print(Fore.GREEN + 'train target data:', args.train_target_data)
+    print("------------------------------")
 
     # determine the categories
     # want to allow multi-label classes.
@@ -179,7 +190,7 @@ def main():
                             image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
                                                                             "RGBDiffplus"] else args.flow_prefix + "{}_{:05d}.t7",
                             random_shift=False,
-                            test_mode=True,
+                            test_mode=True
                             )
 
     source_sampler = torch.utils.data.sampler.RandomSampler(source_set)
@@ -252,6 +263,7 @@ def main():
             if target_set.labels_available:
                 prec1_val, prec1_verb_val, prec1_noun_val = validate(target_loader, model, criterion, num_class, epoch,
                                                                      val_file, writer_val)
+                print(Fore.YELLOW + 'PRECISION VERB:', prec1_verb_val)
                 # remember best prec@1 and save checkpoint
                 if args.train_metric == "all":
                     prec1 = prec1_val
@@ -263,7 +275,8 @@ def main():
                     raise Exception("invalid metric to train")
                 is_best = prec1 > best_prec1
                 if is_best:
-                    best_prec1 = prec1_val
+                    best_prec1 = prec1
+                    print(Fore.RED + 'UPDATE BEST SCORE:', best_prec1)
 
                 line_update = ' ==> updating the best accuracy' if is_best else ''
                 line_best = "Best score {} vs current score {}".format(best_prec1, prec1) + line_update
