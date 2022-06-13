@@ -8,7 +8,8 @@ LEGENDA:
 * TARGET    = test
 '''
 
-ego_path = "/Users/lorenzo/University/Polito/ML and DL/EGO_Project/"
+ego_path = "/home/pol/Desktop/EGO_Project/" # check the path for prextracted model_feature is consistent
+epic_path = "/home/pol/Desktop/EPIC-KITCHENS-100_UDA_TA3N/"
 
 CURRENT_DOMAIN      = "D3"
 TARGET_DOMAIN       = "D3"
@@ -47,15 +48,15 @@ parser.add_argument('--val_list', type=str,
                     default=ego_path + "train_val/" + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                    default=ego_path + "prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_" +
+                    default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
                             CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 parser.add_argument('--train_source_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
-                    default=ego_path + "prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_" +
+                    default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
                             CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train")
 parser.add_argument('--train_target_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                    default=ego_path + "prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_" +
+                    default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
                             CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 
 # ========================= Model Configs ==========================
@@ -170,7 +171,7 @@ parser.add_argument('--resume_hp', default=False, action="store_true",
                     help='whether to use the saved hyper-parameters')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
-parser.add_argument('--exp_path', type=str, default="/Users/lorenzo/University/Polito/ML and DL/EPIC-KITCHENS-100_UDA_TA3N/model/action-model/",
+parser.add_argument('--exp_path', type=str, default=epic_path + "model/action-model/",
                     help='full path of the experiment folder')
 parser.add_argument('--gpus', nargs='+', type=int, default=None)
 parser.add_argument('--flow_prefix', default="", type=str)

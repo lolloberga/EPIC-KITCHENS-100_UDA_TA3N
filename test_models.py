@@ -272,8 +272,10 @@ def validate(val_loader, verb_model, criterion, num_class, noun_model=None, val_
 			val_data = dummyData(batch_val_ori,val_size_ori,val_data_all)
 
 
-		val_label_verb = val_label[0].cpu()
-		val_label_noun = val_label[1].cpu()
+		# val_label_verb = val_label[0].cpu()
+		# val_label_noun = val_label[1].cpu()
+		val_label_verb = val_label[0].cuda()
+		val_label_noun = val_label[1].cuda()
 		with torch.no_grad():
 
 			if args.baseline_type == 'frame':
@@ -292,8 +294,10 @@ def validate(val_loader, verb_model, criterion, num_class, noun_model=None, val_
 				pred_noun = out_val_noun[1]
 			else:
 				pred_noun = out_val_verb[1]
-			pred_verb_cpu = pred_verb.cpu().tolist()
-			pred_noun_cpu = pred_noun.cpu().tolist()
+			# pred_verb_cpu = pred_verb.cpu().tolist()
+			# pred_noun_cpu = pred_noun.cpu().tolist()
+			pred_verb_cpu = pred_verb.cuda().toList()
+			pred_noun_cpu = pred_noun.cuda().tolist()
 			for p_verb, p_noun, id in zip(pred_verb_cpu, pred_noun_cpu, val_id):
 				verb_dict = {}
 				noun_dict = {}
@@ -303,8 +307,10 @@ def validate(val_loader, verb_model, criterion, num_class, noun_model=None, val_
 					noun_dict[str(i)] = prob
 				results_dict[id] = {'verb': verb_dict, 'noun': noun_dict}
 
-			noun_predictions.append(torch.argmax(pred_noun, dim=-1).cpu().numpy())
-			verb_predictions.append(torch.argmax(pred_verb, dim=-1).cpu().numpy())
+			noun_predictions.append(torch.argmax(pred_noun, dim=-1).cuda().numpy())
+			verb_predictions.append(torch.argmax(pred_verb, dim=-1).cuda().numpy())
+			# noun_predictions.append(torch.argmax(pred_noun, dim=-1).cpu().numpy())
+			# verb_predictions.append(torch.argmax(pred_verb, dim=-1).cpu().numpy())
 
 			# measure accuracy and record loss
 			label_verb = val_label_verb_frame if args.baseline_type == 'frame' else val_label_verb
