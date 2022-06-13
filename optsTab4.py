@@ -27,6 +27,8 @@ class OptsParser:
         BATCH = [64, 101, 64]
         OPTIMIZ = 'SGD'
 
+        RES = False
+
         # Used only during DA
         PLACE_ADV = param[3]
         USE_ATTN = param[4]
@@ -175,9 +177,9 @@ class OptsParser:
         self.parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',  # aumentare workers
                             # parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                             help='number of data loading workers (default: 4)')
-        self.parser.add_argument('--resume', default='', type=str, metavar='PATH',
+        self.parser.add_argument('--resume', default=RES, type=str, metavar='PATH',
                             help='path to latest checkpoint (default: none)')
-        self.parser.add_argument('--resume_hp', default=False, action="store_true",
+        self.parser.add_argument('--resume_hp', default=RES, action="store_true",
                             help='whether to use the saved hyper-parameters')
         self.parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                             help='evaluate model on validation set')

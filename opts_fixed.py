@@ -30,6 +30,8 @@ USE_ATTN = 'none'
 ADV_DA = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
 LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
 
+RES = False
+
 parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
 parser.add_argument('--source_domain', type=str, default=CURRENT_DOMAIN)
 parser.add_argument('--target_domain', type=str, default=TARGET_DOMAIN)
@@ -165,9 +167,9 @@ parser.add_argument('--verbose', default=False, action="store_true")
 parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     # parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
-parser.add_argument('--resume', default='', type=str, metavar='PATH',
+parser.add_argument('--resume', default=RES, type=str, metavar='PATH',
                     help='path to latest checkpoint (default: none)')
-parser.add_argument('--resume_hp', default=False, action="store_true",
+parser.add_argument('--resume_hp', default=RES, action="store_true",
                     help='whether to use the saved hyper-parameters')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')

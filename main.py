@@ -31,19 +31,20 @@ torch.cuda.manual_seed_all(1)
 
 init(autoreset=True)
 
-best_prec1 = 0
+# best_prec1 = 0
 gpu_count = torch.cuda.device_count()
 
 
 def main():
-    global args, best_prec1, writer_train, writer_val
+    global args, writer_train, writer_val
+
+    best_prec1 = 0
     args = parser.parse_args()
 
     print(Fore.GREEN + 'Baseline:', args.baseline_type)
     print(Fore.GREEN + 'Frame aggregation method:', args.frame_aggregation)
     print(Fore.GREEN + 'Current architecture:', args.arch)
     print(Fore.GREEN + 'Num class:', args.num_class)
-
     print(Fore.GREEN + 'target data usage:', args.use_target)
     if args.use_target == 'none':
         print(Fore.GREEN + 'no Domain Adaptation')

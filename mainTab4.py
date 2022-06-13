@@ -32,7 +32,7 @@ torch.cuda.manual_seed_all(1)
 
 init(autoreset=True)
 
-best_prec1 = 0
+# best_prec1 = 0
 gpu_count = torch.cuda.device_count()
 
 
@@ -65,8 +65,9 @@ def main():
 
 
 def mainPt2(param):
-    global args, best_prec1, writer_train, writer_val
+    global args, writer_train, writer_val
 
+    best_prec1 = 0
     optsParser = OptsParser(param)
     args = optsParser.getParser().parse_args()
 
