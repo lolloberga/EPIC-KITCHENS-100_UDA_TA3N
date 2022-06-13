@@ -123,7 +123,7 @@ class VideoModel(nn.Module):
 			self.feature_dim = model_test.fc7.in_features
 		elif base_model == "TBN" and modality=="ALL":
 			self.feature_dim = 3072
-		elif base_model == "TBN" or base_model == 'i3d':
+		elif base_model == "TBN" or base_model == 'I3D':
 			self.feature_dim = 1024
 		elif base_model == "TSM":
 			self.feature_dim = 2048

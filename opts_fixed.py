@@ -12,10 +12,22 @@ ego_path = "/Users/lorenzo/University/Polito/ML and DL/EGO_Project/"
 
 CURRENT_DOMAIN      = "D3"
 TARGET_DOMAIN       = "D3"
-CURRENT_MODALITY    = "Flow"         #['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL']
-USE_TARGET          = "none"        #['none', 'Sv', 'uSv']
-FRAME_AGGREGATION   = "avgpool"     #['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none']
-ARCH                = "i3d"         #['i3d', 'TBN', 'TSM'], default TBN
+FRAME_AGGREGATION   = "avgpool"
+CURRENT_MODALITY    = "Flow"
+USE_TARGET          = "none"
+CURRENT_ARCH        = "i3d"
+
+N_EPOCH = 30
+DROP = 0.8
+LEARNING = 1e-2
+BATCH = [64, 101, 64]
+OPTIMIZ = 'SGD'
+
+# Used only during DA
+PLACE_ADV = ['N', 'N', 'N']
+USE_ATTN = 'none'
+ADV_DA = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
+LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
 
 parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
 parser.add_argument('--source_domain', type=str, default=CURRENT_DOMAIN)
@@ -36,20 +48,20 @@ parser.add_argument('--val_list', type=str,
 parser.add_argument('--val_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
                     default=ego_path + "prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_" +
-                            ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
+                            CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 parser.add_argument('--train_source_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
                     default=ego_path + "prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_" +
-                            ARCH + "/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train")
+                            CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train")
 parser.add_argument('--train_target_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
                     default=ego_path + "prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_" +
-                            ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
+                            CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 
 # ========================= Model Configs ==========================
 parser.add_argument('--train_metric', default="verb", type=str)
 parser.add_argument('--dann_warmup', default=False, action="store_true")
-parser.add_argument('--arch', type=str, default=ARCH)
+parser.add_argument('--arch', type=str, default=CURRENT_ARCH.upper(), choices=["TBN", "I3D", "TSM"])
 parser.add_argument('--pretrained', type=str, default="none")
 parser.add_argument('--num_segments', type=int, default=5)
 parser.add_argument('--val_segments', type=int, default=5)
@@ -61,12 +73,12 @@ parser.add_argument('--baseline_type', type=str, default='video',
 parser.add_argument('--frame_aggregation', type=str, default=FRAME_AGGREGATION,
                     choices=['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none'],
                     help='aggregation of frame features (none if baseline_type is not video)')
-parser.add_argument('--optimizer', type=str, default='SGD', choices=['SGD', 'Adam'])
+parser.add_argument('--optimizer', type=str, default=OPTIMIZ, choices=['SGD', 'Adam'])
 parser.add_argument('--use_opencv', default=False, action="store_true",
                     help='whether to use the opencv transformation')
 parser.add_argument('--dropout_i', '--doi', default=0.5, type=float,
                     metavar='DOI', help='dropout ratio for frame-level feature (default: 0.5)')
-parser.add_argument('--dropout_v', '--dov', default=0.5, type=float,
+parser.add_argument('--dropout_v', '--dov', default=DROP, type=float,
                     metavar='DOV', help='dropout ratio for video-level feature (default: 0.5)')
 parser.add_argument('--loss_type', type=str, default="nll",
                     choices=['nll'])
@@ -117,12 +129,12 @@ parser.add_argument('--place_adv', default=['N', 'Y', 'Y'], type=str, nargs="+",
 # ========================= Learning Configs ==========================
 parser.add_argument('--pretrain_source', default=False, action="store_true",
                     help='perform source-only training before DA')
-parser.add_argument('--epochs', default=30, type=int, metavar='N',
+parser.add_argument('--epochs', default=N_EPOCH, type=int, metavar='N',
                     help='number of total epochs to run')
-parser.add_argument('-b', '--batch_size', default=[128, 202, 128], type=int, nargs="+",
+parser.add_argument('-b', '--batch_size', default=BATCH, type=int, nargs="+",
                     # parser.add_argument('-b', '--batch_size', default=[64, 101, 64], type=int, nargs="+",
                     metavar='N', help='mini-batch size ([source, target, testing])')
-parser.add_argument('--lr', '--learning_rate', default=3e-3, type=float,
+parser.add_argument('--lr', '--learning_rate', default=LEARNING, type=float,
                     metavar='LR', help='initial learning rate')
 parser.add_argument('--lr_decay', default=10, type=float, metavar='LRDecay', help='decay factor for learning rate')
 parser.add_argument('--lr_adaptive', type=str, default='none', choices=['none', 'loss', 'dann'])
