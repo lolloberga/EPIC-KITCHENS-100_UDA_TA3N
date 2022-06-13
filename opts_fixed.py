@@ -8,6 +8,8 @@ LEGENDA:
 * TARGET    = test
 '''
 
+ego_path = "/Users/lorenzo/University/Polito/ML and DL/EGO_Project/"
+
 CURRENT_DOMAIN      = "D3"
 TARGET_DOMAIN       = "D3"
 CURRENT_MODALITY    = "Flow"         #['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL']
@@ -24,25 +26,25 @@ parser.add_argument('--modality', type=str, default=CURRENT_MODALITY)
 # choices=['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL'])
 parser.add_argument('--train_source_list', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_source_train.pkl")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + CURRENT_DOMAIN + "_train.pkl")
+                    default=ego_path + "train_val/" + CURRENT_DOMAIN + "_train.pkl")
 parser.add_argument('--train_target_list', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_train_timestamps.pkl")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + CURRENT_DOMAIN + "_test.pkl")
+                    default=ego_path + "train_val/" + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_list', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_test_timestamps.pkl")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/" + CURRENT_DOMAIN + "_test.pkl")
+                    default=ego_path + "train_val/" + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/"
-                            + CURRENT_MODALITY + "/ek_" + ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
+                    default=ego_path + "prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_" +
+                            ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 parser.add_argument('--train_source_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/"
-                            + CURRENT_MODALITY + "/ek_" + ARCH + "/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train")
+                    default=ego_path + "prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_" +
+                            ARCH + "/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train")
 parser.add_argument('--train_target_data', type=str,
                     # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                    default="/Users/lorenzo/University/Polito/ML and DL/EGO_Project/prextracted_model_features/Pre-extracted_feat/"
-                            + CURRENT_MODALITY + "/ek_" + ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
+                    default=ego_path + "prextracted_model_features/Pre-extracted_feat/" + CURRENT_MODALITY + "/ek_" +
+                            ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 
 # ========================= Model Configs ==========================
 parser.add_argument('--train_metric', default="verb", type=str)
