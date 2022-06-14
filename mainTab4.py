@@ -350,9 +350,9 @@ def mainPt2(param):
     train_short_file.close()
 
     if target_set.labels_available:
-        # val_best_file.write('%.3f\t' % best_prec1 + str(args.source_domain) + '-' + str(args.target_domain) + '\t' +
-        #                     str(args.frame_aggregation) + '\t' + str(args.place_adv) + '\t' +
-        #                     str(args.use_attn) + '\n')
+        val_best_file.write('%.3f\t' % best_prec1 + str(args.source_domain) + '-' + str(args.target_domain) + '\t' +
+                            str(args.frame_aggregation) + '\t' + str(args.place_adv) + '\t' +
+                            str(args.use_attn) + '\n')
         # val_file.write(line_time)
         # val_short_file.write(line_time)
         val_file.close()

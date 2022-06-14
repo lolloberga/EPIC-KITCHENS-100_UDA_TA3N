@@ -329,7 +329,7 @@ def main():
     train_short_file.close()
 
     if target_set.labels_available:
-        # val_best_file.write('%.3f\n' % best_prec1)
+        val_best_file.write('%.3f\n' % best_prec1)
         # val_file.write(line_time)
         # val_short_file.write(line_time)
         val_file.close()
