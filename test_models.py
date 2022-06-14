@@ -5,6 +5,8 @@ import sys
 import json
 from json import encoder
 
+from opts_fixed_test import parser
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -26,7 +28,8 @@ encoder.FLOAT_REPR = lambda o: format(o, '.3f')
 init(autoreset=True)
 
 # options
-parser = argparse.ArgumentParser(description="Standard video-level testing")
+#parser = argparse.ArgumentParser(description="Standard video-level testing")
+'''
 parser.add_argument('num_class', type=str, default="classInd.txt")
 parser.add_argument('modality', type=str, choices=['ALL', 'Audio','RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus'])
 parser.add_argument('test_list', type=str)
@@ -74,6 +77,7 @@ parser.add_argument('-j', '--workers', default=4, type=int, metavar='N', help='n
 parser.add_argument('--bS', default=2, help='batch size', type=int, required=False)
 parser.add_argument('--gpus', nargs='+', type=int, default=None)
 parser.add_argument('--flow_prefix', type=str, default='')
+'''
 
 args = parser.parse_args()
 gpu_count = torch.cuda.device_count()
@@ -87,7 +91,7 @@ else:
 	for num in num_class_str:
 		num_class.append(int(num))
 
-criterion = torch.nn.CrossEntropyLoss().cuda()
+criterion = torch.nn.CrossEntropyLoss().cpu()
 
 #=== Load the network ===#
 print(Fore.CYAN + 'preparing the model......')
@@ -99,12 +103,14 @@ verb_net = VideoModel(num_class, args.baseline_type, args.frame_aggregation, arg
 		use_attn=args.use_attn, n_attn=args.n_attn, use_attn_frame=args.use_attn_frame,
 		verbose=args.verbose, before_softmax=False)
 
+'''
 verb_checkpoint = torch.load(args.weights)
 
 verb_base_dict = {'.'.join(k.split('.')[1:]): v for k,v in list(verb_checkpoint['state_dict'].items())}
 verb_net.load_state_dict(verb_base_dict)
-verb_net = torch.nn.DataParallel(verb_net.cuda())
+verb_net = torch.nn.DataParallel(verb_net.cpu())
 verb_net.eval()
+'''
 
 if args.noun_weights is not None:
 	noun_net = VideoModel(num_class, args.baseline_type, args.frame_aggregation, args.modality,
@@ -119,7 +125,7 @@ if args.noun_weights is not None:
 
 	noun_base_dict = {'.'.join(k.split('.')[1:]): v for k,v in list(noun_checkpoint['state_dict'].items())}
 	noun_net.load_state_dict(noun_base_dict)
-	noun_net = torch.nn.DataParallel(noun_net.cuda())
+	noun_net = torch.nn.DataParallel(noun_net.cpu())
 	noun_net.eval()
 else:
 	noun_net = None
@@ -132,17 +138,31 @@ data_length = 1 if args.modality == "RGB" else 1
 num_test = len(pd.read_pickle(args.test_list).index)
 if args.noun_target_data is not None:
 	data_set = TSNDataSet(args.test_target_data+".pkl", args.test_list, num_dataload=num_test, num_segments=args.test_segments,
-		new_length=data_length, modality=args.modality,
+		new_length=data_length, modality=args.modality, total_segments=5,
 		image_tmpl="img_{:05d}.t7" if args.modality in ['RGB', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus'] else args.flow_prefix+"{}_{:05d}.t7",
 		test_mode=True, noun_data_path=args.noun_target_data+".pkl"
 		)
 else:
-	data_set = TSNDataSet(args.test_target_data+".pkl", args.test_list, num_dataload=num_test, num_segments=args.test_segments,
+	data_set = TSNDataSet(args.test_target_data+".pkl", args.test_list,
+						  num_dataload=num_test,
+		num_segments=args.test_segments, total_segments=5,
 		new_length=data_length, modality=args.modality,
 		image_tmpl="img_{:05d}.t7" if args.modality in ['RGB', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus'] else args.flow_prefix+"{}_{:05d}.t7",
 		test_mode=True
 		)
-data_loader = torch.utils.data.DataLoader(data_set, batch_size=args.bS, shuffle=False, num_workers=args.workers, pin_memory=True)
+
+	'''
+	target_set = TSNDataSet(train_target_data, train_target_list,
+                            num_dataload=num_target_train,
+                            num_segments=args.num_segments,
+                            total_segments=5,
+                            new_length=data_length, modality=args.modality,
+                            image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
+                                                                            "RGBDiffplus"] else args.flow_prefix + "{}_{:05d}.t7",
+                            random_shift=False,
+                            test_mode=True,
+                            )'''
+data_loader = torch.utils.data.DataLoader(data_set, batch_size=args.batch_size[1], shuffle=False, num_workers=args.workers, pin_memory=True)
 
 data_gen = tqdm(data_loader)
 
@@ -232,9 +252,9 @@ def dummyData(batch_val_ori, val_size_ori, val_data):
 		val_data = torch.cat((val_data, val_data_dummy))
 
 	# add dummy tensors to make sure batch size can be divided by gpu #
-	if val_data.size(0) % gpu_count != 0:
+	'''if val_data.size(0) % gpu_count != 0:
 		val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2))
-		val_data = torch.cat((val_data, val_data_dummy))
+		val_data = torch.cat((val_data, val_data_dummy))'''
 	return val_data
 
 results_dict = {}
@@ -259,7 +279,7 @@ def validate(val_loader, verb_model, criterion, num_class, noun_model=None, val_
 	noun_predictions = []
 	results_dict = {}
 	for i, (val_data_all, val_label, val_id) in enumerate(val_loader):
-
+		print(i)
 		if noun_model is not None:
 
 			val_size_ori = val_data_all[0].size()  # original shape
@@ -272,8 +292,8 @@ def validate(val_loader, verb_model, criterion, num_class, noun_model=None, val_
 			val_data = dummyData(batch_val_ori,val_size_ori,val_data_all)
 
 
-		val_label_verb = val_label[0].cpu()
-		val_label_noun = val_label[1].cpu()
+		val_label_verb = val_label.cpu()
+		val_label_noun = val_label.cpu() #TODO: non è giusto
 		with torch.no_grad():
 
 			if args.baseline_type == 'frame':
@@ -316,7 +336,15 @@ def validate(val_loader, verb_model, criterion, num_class, noun_model=None, val_
 
 			loss_verb = criterion(pred_verb, label_verb)
 			loss_noun = criterion(pred_noun, label_noun)
-			loss = 0.5*(loss_verb + loss_noun)
+			if args.train_metric == "all":
+				loss = 0.5 * (loss_verb + loss_noun)
+			elif args.train_metric == "noun":
+				raise Exception('noun is temporally unavaiable')
+				# loss = loss_noun  # 0.5*(loss_verb+loss_noun)
+			elif args.train_metric == "verb":
+				loss = loss_verb  # 0.5*(loss_verb+loss_noun)
+			else:
+				raise Exception("invalid metric to train")
 			prec1_verb, prec5_verb = accuracy(pred_verb.data, label_verb, topk=(1, 5))
 			prec1_noun, prec5_noun = accuracy(pred_noun.data, label_noun, topk=(1, 5))
 			prec1_action, prec5_action = multitask_accuracy((pred_verb.data, pred_noun.data), (label_verb, label_noun),
