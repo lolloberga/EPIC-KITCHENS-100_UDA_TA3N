@@ -13,7 +13,8 @@ from dataset import TSNDataSet
 from models import VideoModel
 from loss import *
 # from opts import parser
-from opts_fixed import parser
+# from opts_fixed import parser
+from optsTab4 import OptsParser
 from utils.utils import randSelectBatch
 import math
 import pandas as pd
@@ -36,16 +37,46 @@ gpu_count = torch.cuda.device_count()
 
 
 def main():
+    # Disposition for Tab4
+    current_d = ['D1', 'D2', 'D3']
+    target_d = ['D1', 'D2', 'D3']
+    place_adv = [['N', 'N', 'N'],
+                 ['N', 'N', 'Y'],
+                 ['N', 'Y', 'N'],
+                 ['Y', 'N', 'N'],
+                 ['Y', 'Y', 'Y']]
+    frame_agg = ['avgpool', 'trn-m']
+    use_attn = ['none', 'TransAttn']
+
+    for current in current_d:
+        for target in target_d:
+            if current == target:
+                continue
+            else:
+                for place in place_adv:
+                    for agg in frame_agg:
+                        if place != ['Y', 'Y', 'Y']:
+                            param = [current, target, agg, place, 'none']
+                            mainPt2(param)
+                        else:
+                            for use in use_attn:
+                                param = [current, target, agg, place, use]
+                                mainPt2(param)
+
+
+def mainPt2(param):
     global args, writer_train, writer_val
 
     best_prec1 = 0
-    args = parser.parse_args()
+    optsParser = OptsParser(param)
+    args = optsParser.getParser().parse_args()
 
-    print(Fore.GREEN + 'Baseline:', args.baseline_type)
+    # print(Fore.GREEN + 'Baseline:', args.baseline_type)
     print(Fore.GREEN + 'Frame aggregation method:', args.frame_aggregation)
     print(Fore.GREEN + 'Current architecture:', args.arch)
-    print(Fore.GREEN + 'Num class:', args.num_class)
-    print(Fore.GREEN + 'target data usage:', args.use_target)
+    # print(Fore.GREEN + 'Num class:', args.num_class)
+    # print(Fore.GREEN + 'target data usage:', args.use_target)
+
     if args.use_target == 'none':
         print(Fore.GREEN + 'no Domain Adaptation')
     else:
@@ -62,15 +93,6 @@ def main():
 
     print(Fore.YELLOW + 'Current modality:', args.modality)
     print(Fore.YELLOW + 'From dataset', args.source_domain, Fore.YELLOW + 'to dataset', args.target_domain)
-
-    print("------------------------------")
-    print(Fore.GREEN + 'val list:', args.val_list)
-    print(Fore.GREEN + 'train source list:', args.train_source_list)
-    print(Fore.GREEN + 'train target list:', args.train_target_list)
-    print(Fore.GREEN + 'val data:', args.val_data)
-    print(Fore.GREEN + 'train source data:', args.train_source_data)
-    print(Fore.GREEN + 'train target data:', args.train_target_data)
-    print("------------------------------")
 
     # determine the categories
     # want to allow multi-label classes.
@@ -98,7 +120,7 @@ def main():
         writer_train = SummaryWriter(path_exp + '/tensorboard_train')  # for tensorboardX
         writer_val = SummaryWriter(path_exp + '/tensorboard_val')  # for tensorboardX
     # === initialize the model ===#
-    print(Fore.CYAN + 'preparing the model......')
+    # print(Fore.CYAN + 'preparing the model......')
     model = VideoModel(num_class, args.baseline_type, args.frame_aggregation, args.modality,
                        train_segments=args.num_segments, val_segments=args.val_segments,
                        base_model=args.arch, path_pretrained=args.pretrained,
@@ -111,22 +133,22 @@ def main():
                        verbose=args.verbose, share_params=args.share_params)
 
     # model = torch.nn.DataParallel(model, args.gpus).cpu()
-    model = torch.nn.DataParallel(model, args.gpus).cuda()
+    model = torch.nn.DataParallel(module=model, output_device=torch.device, device_ids=[0], dim=args.gpus).cuda()
 
     if args.optimizer == 'SGD':
-        print(Fore.YELLOW + 'using SGD')
+        # print(Fore.YELLOW + 'using SGD')
         optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.weight_decay,
                                     nesterov=True)
     elif args.optimizer == 'Adam':
-        print(Fore.YELLOW + 'using Adam')
+        # print(Fore.YELLOW + 'using Adam')
         optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
     else:
-        print(Back.RED + 'optimizer not support or specified!!!')
+        # print(Back.RED + 'optimizer not support or specified!!!')
         exit()
 
     # === check point ===#
     start_epoch = 1
-    print(Fore.CYAN + 'checking the checkpoint......')
+    # print(Fore.CYAN + 'checking the checkpoint......')
     if args.resume:
         if os.path.isfile(args.resume):
             checkpoint = torch.load(args.resume)
@@ -161,7 +183,7 @@ def main():
     val_best_file = open(path_exp + 'best_val_new.txt', 'a')
 
     # === Data loading ===#
-    print(Fore.CYAN + 'loading data......')
+    # print(Fore.CYAN + 'loading data......')
 
     if args.use_opencv:
         print("use opencv functions")
@@ -192,7 +214,7 @@ def main():
                             image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
                                                                             "RGBDiffplus"] else args.flow_prefix + "{}_{:05d}.t7",
                             random_shift=False,
-                            test_mode=True
+                            test_mode=True,
                             )
 
     source_sampler = torch.utils.data.sampler.RandomSampler(source_set)
@@ -218,7 +240,7 @@ def main():
 
     # --- Optimizer ---#
     # define loss function (criterion) and optimizer
-    if args.loss_type == 'nll':
+    if args.loss_type == 'null':
         # criterion = torch.nn.CrossEntropyLoss().cpu()
         # criterion_domain = torch.nn.CrossEntropyLoss().cpu()
         criterion = torch.nn.CrossEntropyLoss().cuda()
@@ -228,7 +250,7 @@ def main():
 
     # === Training ===#
     start_train = time.time()
-    print(Fore.CYAN + 'start training......')
+    # print(Fore.CYAN + 'start training......')
     beta = args.beta
     gamma = args.gamma
     mu = args.mu
@@ -244,10 +266,10 @@ def main():
         print(epoch)
         print('lr: ', current_state['param_groups'][0]['lr'])
 
-        ## schedule for parameters
+        # schedule for parameters
         alpha = 2 / (1 + math.exp(-1 * (epoch) / args.epochs)) - 1 if args.alpha < 0 else args.alpha
 
-        ## schedule for learning rate
+        # schedule for learning rate
         if args.lr_adaptive == 'loss':
             adjust_learning_rate_loss(optimizer, args.lr_decay, loss_c_current, loss_c_previous, '>')
         elif args.lr_adaptive == 'none' and epoch in args.lr_steps:
@@ -271,7 +293,6 @@ def main():
             if target_set.labels_available:
                 prec1_val, prec1_verb_val, prec1_noun_val = validate(target_loader, model, criterion, num_class, epoch,
                                                                      val_file, writer_val)
-                print(Fore.YELLOW + 'PRECISION VERB:', prec1_verb_val)
                 # remember best prec@1 and save checkpoint
                 if args.train_metric == "all":
                     prec1 = prec1_val
@@ -329,7 +350,9 @@ def main():
     train_short_file.close()
 
     if target_set.labels_available:
-        val_best_file.write('%.3f\n' % best_prec1)
+        val_best_file.write('%.3f\t' % best_prec1 + str(args.source_domain) + '-' + str(args.target_domain) + '\t' +
+                            str(args.frame_aggregation) + '\t' + str(args.place_adv) + '\t' +
+                            str(args.use_attn) + '\n')
         # val_file.write(line_time)
         # val_short_file.write(line_time)
         val_file.close()
@@ -340,14 +363,10 @@ def main():
         writer_val.close()
 
     if args.save_attention >= 0:
-        # np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.cpu().
-        #            detach().numpy(), fmt="%s")
-        # np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.cpu().
-        #            detach().numpy(), fmt="%s")
-        np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.cuda().
-                   detach().numpy(), fmt="%s")
-        np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.cuda().
-                   detach().numpy(), fmt="%s")
+        # np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.cpu().detach().numpy(), fmt="%s")
+        # np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.cpu().detach().numpy(), fmt="%s")
+        np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.cuda().detach().numpy(), fmt="%s")
+        np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.cuda().detach().numpy(), fmt="%s")
 
 
 def train(num_class, source_loader, target_loader, model, criterion, criterion_domain, optimizer, epoch, log, log_short,
@@ -443,10 +462,10 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         data_time.update(time.time() - end)
 
         source_label_verb = source_label.cuda()
-        # source_label_verb = source_label.cpu()  # pytorch 0.4.X
+        #source_label_verb = source_label.cpu()  # pytorch 0.4.X
         #source_label_noun = source_label[1].cpu()  # pytorch 0.4.X
 
-        target_label_verb = target_label.cuda()  # pytorch 0.4.X
+        target_label_verb = target_label.cuda()
         # target_label_verb = target_label.cpu()  # pytorch 0.4.X
         #target_label_noun = target_label[1].cpu()  # pytorch 0.4.X
 
@@ -585,7 +604,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         #	loss_classification += criterion(out_source_2, label)
 
         losses_c_verb.update(loss_verb.item(), out_verb.size(0))  # pytorch 0.4.X
-        #losses_c_noun.update(loss_noun.item(), out_noun.size(0))  # pytorch 0.4.X
+        # losses_c_noun.update(loss_noun.item(), out_noun.size(0))  # pytorch 0.4.X
         loss = loss_classification
         losses_c.update(loss_classification.item(), out_verb.size(0))
 
@@ -666,8 +685,8 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                     target_domain_label = torch.ones(pred_domain_target_single.size(0)).long()
                     domain_label = torch.cat((source_domain_label, target_domain_label), 0)
 
-                    domain_label = domain_label.cuda()
                     # domain_label = domain_label.cpu()
+                    domain_label = domain_label.cuda()
 
                     pred_domain = torch.cat((pred_domain_source_single, pred_domain_target_single), 0)
                     pred_domain_all.append(pred_domain)
@@ -810,8 +829,8 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                 top5_action=top5_action,
                 lr=optimizer.param_groups[0]['lr'])
 
-            if i % args.show_freq == 0:
-                print(line)
+            # if i % args.show_freq == 0:
+            #     print(line)
 
             log.write('%s\n' % line)
 
@@ -823,11 +842,10 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         if args.save_attention >= 0:
             attn_source = attn_source[source_label == args.save_attention]
             attn_target = attn_target[target_label == args.save_attention]
-
-            attn_epoch_source = torch.cat((attn_epoch_source, attn_source.cuda()))
-            attn_epoch_target = torch.cat((attn_epoch_target, attn_target.cuda()))
             # attn_epoch_source = torch.cat((attn_epoch_source, attn_source.cpu()))
             # attn_epoch_target = torch.cat((attn_epoch_target, attn_target.cpu()))
+            attn_epoch_source = torch.cat((attn_epoch_source, attn_source.cuda()))
+            attn_epoch_target = torch.cat((attn_epoch_target, attn_target.cuda()))
 
     # update the embedding every epoch
     if args.tensorboard:
@@ -888,9 +906,9 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
             val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2))
             val_data = torch.cat((val_data, val_data_dummy))'''
 
-        val_label_verb = val_label.cuda()
         # val_label_verb = val_label.cpu()
-        # val_label_noun = val_label[1].cpu()
+        val_label_verb = val_label.cuda()
+        #val_label_noun = val_label[1].cpu()
         with torch.no_grad():
 
             if args.baseline_type == 'frame':
@@ -973,8 +991,8 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
                     top1_verb=top1_verb, top5_verb=top5_verb, top1_noun=top1_noun, top5_noun=top5_noun,
                     top1_action=top1_action, top5_action=top5_action)
 
-                if i % args.show_freq == 0:
-                    print(line)
+                # if i % args.show_freq == 0:
+                #     print(line)
 
                 log.write('%s\n' % line)
 
@@ -989,10 +1007,10 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
             tensor_writer.add_embedding(feat_val_display, metadata=label_val_verb_display.data, global_step=epoch,
                                         tag='validation')
 
-    print((
-        'Testing Results: Prec@1 verb {top1_verb.avg:.3f}  Prec@1 noun {top1_noun.avg:.3f} Prec@1 action {top1_action.avg:.3f} Prec@5 verb {top5_verb.avg:.3f} Prec@5 noun {top5_noun.avg:.3f} Prec@5 action {top5_action.avg:.3f} Loss {loss.avg:.5f}'
-            .format(top1_verb=top1_verb, top1_noun=top1_noun, top1_action=top1_action, top5_verb=top5_verb,
-                    top5_noun=top5_noun, top5_action=top5_action, loss=losses)))
+    # print((
+    #     'Testing Results: Prec@1 verb {top1_verb.avg:.3f}  Prec@1 noun {top1_noun.avg:.3f} Prec@1 action {top1_action.avg:.3f} Prec@5 verb {top5_verb.avg:.3f} Prec@5 noun {top5_noun.avg:.3f} Prec@5 action {top5_action.avg:.3f} Loss {loss.avg:.5f}'
+    #         .format(top1_verb=top1_verb, top1_noun=top1_noun, top1_action=top1_action, top5_verb=top5_verb,
+    #                 top5_noun=top5_noun, top5_action=top5_action, loss=losses)))
 
     log.write((
         'Testing Results: Prec@1 verb {top1_verb.avg:.3f}  Prec@1 noun {top1_noun.avg:.3f} Prec@1 action {top1_action.avg:.3f} Prec@5 verb {top5_verb.avg:.3f} Prec@5 noun {top5_noun.avg:.3f} Prec@5 action {top5_action.avg:.3f} Loss {loss.avg:.5f}\n'
