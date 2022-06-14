@@ -8,12 +8,13 @@ LEGENDA:
 * TARGET    = test
 '''
 
-CURRENT_DOMAIN      = "D3"
-TARGET_DOMAIN       = "D3"
-CURRENT_MODALITY    = "Flow"         #['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL']
+CURRENT_DOMAIN      = "D1"
+TARGET_DOMAIN       = "D1"
+CURRENT_MODALITY    = "RGB"         #['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL']
 USE_TARGET          = "none"        #['none', 'Sv', 'uSv']
-FRAME_AGGREGATION   = "avgpool"     #['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none']
+FRAME_AGGREGATION   = "rnn"         #['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none']
 ARCH                = "i3d"         #['i3d', 'TBN', 'TSM'], default TBN
+RNN_CELL            = "LSTM"        #['LSTM', 'GRU', 'LSTA']
 
 parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
 parser.add_argument('--source_domain', type=str, default=CURRENT_DOMAIN)
@@ -62,9 +63,9 @@ parser.add_argument('--frame_aggregation', type=str, default=FRAME_AGGREGATION,
 parser.add_argument('--optimizer', type=str, default='SGD', choices=['SGD', 'Adam'])
 parser.add_argument('--use_opencv', default=False, action="store_true",
                     help='whether to use the opencv transformation')
-parser.add_argument('--dropout_i', '--doi', default=0.5, type=float,
+parser.add_argument('--dropout_i', '--doi', default=0.8, type=float,
                     metavar='DOI', help='dropout ratio for frame-level feature (default: 0.5)')
-parser.add_argument('--dropout_v', '--dov', default=0.5, type=float,
+parser.add_argument('--dropout_v', '--dov', default=0.8, type=float,
                     metavar='DOV', help='dropout ratio for video-level feature (default: 0.5)')
 parser.add_argument('--loss_type', type=str, default="nll",
                     choices=['nll'])
@@ -73,10 +74,13 @@ parser.add_argument('--weighted_class_loss', type=str, default='N', choices=['Y'
 # ------ RNN ------
 parser.add_argument('--n_rnn', default=1, type=int, metavar='M',
                     help='number of RNN layers (e.g. 0, 1, 2, ...)')
-parser.add_argument('--rnn_cell', type=str, default='LSTM', choices=['LSTM', 'GRU'])
+parser.add_argument('--rnn_cell', type=str, default=RNN_CELL, choices=['LSTM', 'GRU', 'LSTA'])
 parser.add_argument('--n_directions', type=int, default=1, choices=[1, 2],
                     help='(bi-) direction RNN')
 parser.add_argument('--n_ts', type=int, default=5, help='number of temporal segments')
+
+parser.add_argument('--outPool_size', type=int, default=10, help='size of output pooling for LSTA')
+parser.add_argument('--mem_size', type=int, default=512, help='size of the LSTA cell')
 
 # ========================= DA Configs ==========================
 parser.add_argument('--share_params', type=str, default='Y', choices=['Y', 'N'])
@@ -115,12 +119,12 @@ parser.add_argument('--place_adv', default=['N', 'Y', 'Y'], type=str, nargs="+",
 # ========================= Learning Configs ==========================
 parser.add_argument('--pretrain_source', default=False, action="store_true",
                     help='perform source-only training before DA')
-parser.add_argument('--epochs', default=30, type=int, metavar='N',
+parser.add_argument('--epochs', default=40, type=int, metavar='N',
                     help='number of total epochs to run')
-parser.add_argument('-b', '--batch_size', default=[128, 202, 128], type=int, nargs="+",
+parser.add_argument('-b', '--batch_size', default=[32, 32, 32], type=int, nargs="+",
                     # parser.add_argument('-b', '--batch_size', default=[64, 101, 64], type=int, nargs="+",
                     metavar='N', help='mini-batch size ([source, target, testing])')
-parser.add_argument('--lr', '--learning_rate', default=3e-3, type=float,
+parser.add_argument('--lr', '--learning_rate', default=1e-2, type=float,
                     metavar='LR', help='initial learning rate')
 parser.add_argument('--lr_decay', default=10, type=float, metavar='LRDecay', help='decay factor for learning rate')
 parser.add_argument('--lr_adaptive', type=str, default='none', choices=['none', 'loss', 'dann'])
@@ -138,11 +142,11 @@ parser.add_argument('--copy_list', default=['N', 'N'], type=str, nargs="+",
                     help='duplicate data in case the dataset is relatively small ([copy source list, copy target list])')
 
 # ========================= Monitor Configs ==========================
-parser.add_argument('--print_freq', '-pf', default=1, type=int,
+parser.add_argument('--print_freq', '-pf', default=20, type=int,
                     metavar='N', help='frequency for printing to text files (default: 10)')
-parser.add_argument('--show_freq', '-sf', default=1, type=int,
+parser.add_argument('--show_freq', '-sf', default=20, type=int,
                     metavar='N', help='frequency for showing on the screen (default: 10)')
-parser.add_argument('--eval_freq', '-ef', default=1, type=int,
+parser.add_argument('--eval_freq', '-ef', default=5, type=int,
                     metavar='N', help='evaluation frequency (default: 5)')
 parser.add_argument('--verbose', default=False, action="store_true")
 
