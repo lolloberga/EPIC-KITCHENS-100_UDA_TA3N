@@ -21,11 +21,15 @@ class OptsParser:
         USE_TARGET = "uSv"
         CURRENT_ARCH = "tsm"
 
-        N_EPOCH = 30
+        N_EPOCH = 50
         DROP = 0.8
-        LEARNING = 1e-2
-        BATCH = [64, 101, 64]
+        LEARNING = 3e-2
+        BATCH = [32,28, 64]
         OPTIMIZ = 'SGD'
+        LRN_DECAY = 'noob'
+        LRN_ADPT = 'dann'
+        LRN_STEP = list(range(10,N_EPOCH,10))
+        LRN_DECAY_WEIGHT = 1e-4
 
         RES = False
 
@@ -34,7 +38,6 @@ class OptsParser:
         USE_ATTN = param[4]
         ADV_DA = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
         LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
-
 
 
         self.parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
@@ -127,7 +130,7 @@ class OptsParser:
                             help='weighting for the discrepancy loss (use scheduler if < 0)')
         self.parser.add_argument('--beta', default=[0.75, 0.75, 0.5], type=float, nargs="+", metavar='M',
                             help='weighting for the adversarial loss (use scheduler if < 0; [relation-beta, video-beta, frame-beta])')
-        self.parser.add_argument('--gamma', default=0.003, type=float, metavar='M',
+        self.parser.add_argument('--gamma', default=0.003, type=float, metavar='M', # default = 0.3
                             help='weighting for the entropy loss')
         self.parser.add_argument('--mu', default=0, type=float, metavar='M',
                             help='weighting for ensembling loss (e.g. discrepancy)')
@@ -143,19 +146,20 @@ class OptsParser:
         self.parser.add_argument('--epochs', default=N_EPOCH, type=int, metavar='N',  # 30
                             help='number of total epochs to run')
         self.parser.add_argument('-b', '--batch_size', default=BATCH, type=int, nargs="+",
-                            # [128, 202, 128]   [32, 32, 32]
+                            # [128, 202, 128]   [32, 32, 32]    [32, 28, 64] --->tip: train80 val20 test
                             # parser.add_argument('-b', '--batch_size', default=[64, 101, 64], type=int, nargs="+",
                             metavar='N', help='mini-batch size ([source, target, testing])')
         self.parser.add_argument('--lr', '--learning_rate', default=LEARNING, type=float,  # 3e-3
                             metavar='LR', help='initial learning rate')
-        self.parser.add_argument('--lr_decay', default=10, type=float, metavar='LRDecay',
+        self.parser.add_argument('--lr_decay', default=LRN_DECAY, # type=float,
+                                 metavar='LRDecay', # 10
                             help='decay factor for learning rate')
-        self.parser.add_argument('--lr_adaptive', type=str, default='none', choices=['none', 'loss', 'dann'])
-        self.parser.add_argument('--lr_steps', default=[10, 20], type=float, nargs="+",
+        self.parser.add_argument('--lr_adaptive', type=str, default=LRN_ADPT, choices=['none', 'loss', 'dann'])
+        self.parser.add_argument('--lr_steps', default=LRN_STEP, type=float, nargs="+",
                             metavar='LRSteps', help='epochs to decay learning rate')
         self.parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                             help='momentum')
-        self.parser.add_argument('--weight_decay', '--wd', default=1e-2, type=float,
+        self.parser.add_argument('--weight_decay', '--wd', default=LRN_DECAY_WEIGHT, type=float,
                             metavar='W', help='weight decay (default: 1e-4)')
         self.parser.add_argument('--clip_gradient', '--gd', default=20, type=float,
                             metavar='W', help='gradient norm clipping (default: disabled)')

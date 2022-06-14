@@ -239,6 +239,9 @@ def main():
     attn_target_all = torch.Tensor()
 
     for epoch in range(start_epoch, args.epochs + 1):
+        # print parameters of optimizer
+        # current_state = optimizer.state_dict()
+        # print(current_state['param_groups'])
 
         ## schedule for parameters
         alpha = 2 / (1 + math.exp(-1 * (epoch) / args.epochs)) - 1 if args.alpha < 0 else args.alpha

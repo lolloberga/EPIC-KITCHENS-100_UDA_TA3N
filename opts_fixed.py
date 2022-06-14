@@ -18,11 +18,17 @@ CURRENT_MODALITY    = "Flow"
 USE_TARGET          = "none"
 CURRENT_ARCH        = "i3d"
 
-N_EPOCH = 30
+N_EPOCH = 50
 DROP = 0.8
-LEARNING = 1e-2
-BATCH = [64, 101, 64]
+LEARNING = 3e-2
+BATCH = [32,28, 64]
 OPTIMIZ = 'SGD'
+LRN_DECAY = 'noob'
+LRN_ADPT = 'dann'
+LRN_STEP = list(range(10,N_EPOCH,10))
+LRN_DECAY_WEIGHT = 1e-4
+
+RES = False
 
 # Used only during DA
 PLACE_ADV = ['N', 'N', 'N']
@@ -30,7 +36,6 @@ USE_ATTN = 'none'
 ADV_DA = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
 LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
 
-RES = False
 
 parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
 parser.add_argument('--source_domain', type=str, default=CURRENT_DOMAIN)
@@ -139,13 +144,13 @@ parser.add_argument('-b', '--batch_size', default=BATCH, type=int, nargs="+",
                     metavar='N', help='mini-batch size ([source, target, testing])')
 parser.add_argument('--lr', '--learning_rate', default=LEARNING, type=float,
                     metavar='LR', help='initial learning rate')
-parser.add_argument('--lr_decay', default=10, type=float, metavar='LRDecay', help='decay factor for learning rate')
-parser.add_argument('--lr_adaptive', type=str, default='none', choices=['none', 'loss', 'dann'])
-parser.add_argument('--lr_steps', default=[10, 20], type=float, nargs="+",
+parser.add_argument('--lr_decay', default=LRN_DECAY, type=float, metavar='LRDecay', help='decay factor for learning rate')
+parser.add_argument('--lr_adaptive', type=str, default=LRN_ADPT, choices=['none', 'loss', 'dann'])
+parser.add_argument('--lr_steps', default=LRN_STEP, type=float, nargs="+",
                     metavar='LRSteps', help='epochs to decay learning rate')
 parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                     help='momentum')
-parser.add_argument('--weight_decay', '--wd', default=1e-4, type=float,
+parser.add_argument('--weight_decay', '--wd', default=LRN_DECAY_WEIGHT, type=float,
                     metavar='W', help='weight decay (default: 1e-4)')
 parser.add_argument('--clip_gradient', '--gd', default=20, type=float,
                     metavar='W', help='gradient norm clipping (default: disabled)')

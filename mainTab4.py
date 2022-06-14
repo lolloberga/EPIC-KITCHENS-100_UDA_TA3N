@@ -71,11 +71,11 @@ def mainPt2(param):
     optsParser = OptsParser(param)
     args = optsParser.getParser().parse_args()
 
-    print(Fore.GREEN + 'Baseline:', args.baseline_type)
+    # print(Fore.GREEN + 'Baseline:', args.baseline_type)
     print(Fore.GREEN + 'Frame aggregation method:', args.frame_aggregation)
     print(Fore.GREEN + 'Current architecture:', args.arch)
-    print(Fore.GREEN + 'Num class:', args.num_class)
-    print(Fore.GREEN + 'target data usage:', args.use_target)
+    # print(Fore.GREEN + 'Num class:', args.num_class)
+    # print(Fore.GREEN + 'target data usage:', args.use_target)
     if args.use_target == 'none':
         print(Fore.GREEN + 'no Domain Adaptation')
     else:
@@ -119,7 +119,7 @@ def mainPt2(param):
         writer_train = SummaryWriter(path_exp + '/tensorboard_train')  # for tensorboardX
         writer_val = SummaryWriter(path_exp + '/tensorboard_val')  # for tensorboardX
     # === initialize the model ===#
-    print(Fore.CYAN + 'preparing the model......')
+    # print(Fore.CYAN + 'preparing the model......')
     model = VideoModel(num_class, args.baseline_type, args.frame_aggregation, args.modality,
                        train_segments=args.num_segments, val_segments=args.val_segments,
                        base_model=args.arch, path_pretrained=args.pretrained,
@@ -135,19 +135,19 @@ def mainPt2(param):
     model = torch.nn.DataParallel(module=model, output_device=torch.device, device_ids=[0], dim=args.gpus).cuda()
 
     if args.optimizer == 'SGD':
-        print(Fore.YELLOW + 'using SGD')
+        # print(Fore.YELLOW + 'using SGD')
         optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=args.momentum, weight_decay=args.weight_decay,
                                     nesterov=True)
     elif args.optimizer == 'Adam':
-        print(Fore.YELLOW + 'using Adam')
+        # print(Fore.YELLOW + 'using Adam')
         optimizer = torch.optim.Adam(model.parameters(), args.lr, weight_decay=args.weight_decay)
     else:
-        print(Back.RED + 'optimizer not support or specified!!!')
+        # print(Back.RED + 'optimizer not support or specified!!!')
         exit()
 
     # === check point ===#
     start_epoch = 1
-    print(Fore.CYAN + 'checking the checkpoint......')
+    # print(Fore.CYAN + 'checking the checkpoint......')
     if args.resume:
         if os.path.isfile(args.resume):
             checkpoint = torch.load(args.resume)
@@ -182,7 +182,7 @@ def mainPt2(param):
     val_best_file = open(path_exp + 'best_val.log', 'a')
 
     # === Data loading ===#
-    print(Fore.CYAN + 'loading data......')
+    # print(Fore.CYAN + 'loading data......')
 
     if args.use_opencv:
         print("use opencv functions")
@@ -249,7 +249,7 @@ def mainPt2(param):
 
     # === Training ===#
     start_train = time.time()
-    print(Fore.CYAN + 'start training......')
+    # print(Fore.CYAN + 'start training......')
     beta = args.beta
     gamma = args.gamma
     mu = args.mu
@@ -260,11 +260,15 @@ def mainPt2(param):
     attn_target_all = torch.Tensor()
 
     for epoch in range(start_epoch, args.epochs + 1):
+        # print parameters of optimizer
+        current_state = optimizer.state_dict()
+        print(epoch)
+        print(current_state['param_groups'])
 
-        ## schedule for parameters
+        # schedule for parameters
         alpha = 2 / (1 + math.exp(-1 * (epoch) / args.epochs)) - 1 if args.alpha < 0 else args.alpha
 
-        ## schedule for learning rate
+        # schedule for learning rate
         if args.lr_adaptive == 'loss':
             adjust_learning_rate_loss(optimizer, args.lr_decay, loss_c_current, loss_c_previous, '>')
         elif args.lr_adaptive == 'none' and epoch in args.lr_steps:
