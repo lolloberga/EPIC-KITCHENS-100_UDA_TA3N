@@ -11,6 +11,8 @@ import math
 from colorama import init
 from colorama import Fore, Back, Style
 
+from LSTA.attentionModule import attentionModel
+
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
 
@@ -64,7 +66,7 @@ class VideoModel(nn.Module):
 				crop_num=1, partial_bn=True, verbose=True, add_fc=1, fc_dim=1024,
 				n_rnn=1, rnn_cell='LSTM', n_directions=1, n_ts=5,
 				use_attn='TransAttn', n_attn=1, use_attn_frame='none',
-				share_params='Y'):
+				share_params='Y', mem_size=512, outpool_size=100):
 		super(VideoModel, self).__init__()
 		self.modality = modality
 		self.train_segments = train_segments
@@ -87,6 +89,8 @@ class VideoModel(nn.Module):
 		self.rnn_cell = rnn_cell
 		self.n_directions = n_directions
 		self.n_ts = n_ts # temporal segment
+		self.mem_size = mem_size
+		self.outpool_size = outpool_size
 
 		# Attention
 		self.use_attn = use_attn 
@@ -220,11 +224,14 @@ class VideoModel(nn.Module):
 				self.rnn = nn.LSTM(feat_frame_dim, self.hidden_dim//self.n_directions, self.n_layers, batch_first=True, bidirectional=bool(int(self.n_directions/2)))
 			elif self.rnn_cell == 'GRU':
 				self.rnn = nn.GRU(feat_frame_dim, self.hidden_dim//self.n_directions, self.n_layers, batch_first=True, bidirectional=bool(int(self.n_directions/2)))
+			elif self.rnn_cell == 'LSTA':
+				self.rnn = attentionModel(num_classes=num_class[0], mem_size=self.mem_size, c_cam_classes=self.outpool_size)
 
 			# initialization
-			for p in range(self.n_layers):
-				kaiming_normal_(self.rnn.all_weights[p][0])
-				kaiming_normal_(self.rnn.all_weights[p][1])
+			if self.rnn_cell is not 'LSTA':
+				for p in range(self.n_layers):
+					kaiming_normal_(self.rnn.all_weights[p][0])
+					kaiming_normal_(self.rnn.all_weights[p][1])
 
 			self.bn_before_rnn = nn.BatchNorm2d(1)
 			self.bn_after_rnn = nn.BatchNorm2d(1)
@@ -432,14 +439,17 @@ class VideoModel(nn.Module):
 			feat_fc_video = feat_fc_video.squeeze(2)  # 16 x 3 x 1 x 512 --> 16 x 3 x 512
 
 			hidden_temp = torch.zeros(self.n_layers * self.n_directions, feat_fc_video.size(0),
-									  self.hidden_dim // self.n_directions).cuda()
+									  self.hidden_dim // self.n_directions).cpu()
 
 			if self.rnn_cell == 'LSTM':
 				hidden_init = (hidden_temp, hidden_temp)
 			elif self.rnn_cell == 'GRU':
 				hidden_init = hidden_temp
+			elif self.rnn_cell == 'LSTA':
+				hidden_init = hidden_temp
 
-			self.rnn.flatten_parameters()
+			if self.rnn_cell is not 'LSTA':
+				self.rnn.flatten_parameters()
 			feat_fc_video, hidden_final = self.rnn(feat_fc_video, hidden_init)  # e.g. 16 x 25 x 512
 
 			# get the last feature vector
