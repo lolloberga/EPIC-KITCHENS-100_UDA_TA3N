@@ -24,7 +24,7 @@ class OptsParser:
         N_EPOCH = 50
         DROP = 0.8
         LEARNING = 3e-2
-        BATCH = [32,28, 64]
+        BATCH = [32, 28, 64]
         OPTIMIZ = 'SGD'
         LRN_DECAY = 'noob'
         LRN_ADPT = 'dann'

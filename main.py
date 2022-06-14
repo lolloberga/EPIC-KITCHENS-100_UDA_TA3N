@@ -149,10 +149,10 @@ def main():
         train_short_file = open(path_exp + 'train_short.log', 'a')
         val_file = open(path_exp + 'val.log', 'a')
         val_short_file = open(path_exp + 'val_short.log', 'a')
-        train_file.write('========== start: ' + str(start_epoch) + '\n')  # separation line
-        train_short_file.write('========== start: ' + str(start_epoch) + '\n')
-        val_file.write('========== start: ' + str(start_epoch) + '\n')
-        val_short_file.write('========== start: ' + str(start_epoch) + '\n')
+        # train_file.write('========== start: ' + str(start_epoch) + '\n')  # separation line
+        # train_short_file.write('========== start: ' + str(start_epoch) + '\n')
+        # val_file.write('========== start: ' + str(start_epoch) + '\n')
+        # val_short_file.write('========== start: ' + str(start_epoch) + '\n')
     else:
         train_short_file = open(path_exp + 'train_short.log', 'w')
         val_short_file = open(path_exp + 'val_short.log', 'w')
@@ -240,8 +240,9 @@ def main():
 
     for epoch in range(start_epoch, args.epochs + 1):
         # print parameters of optimizer
-        # current_state = optimizer.state_dict()
-        # print(current_state['param_groups'])
+        current_state = optimizer.state_dict()
+        print(epoch)
+        print('lr: ', current_state['param_groups'][0]['lr'])
 
         ## schedule for parameters
         alpha = 2 / (1 + math.exp(-1 * (epoch) / args.epochs)) - 1 if args.alpha < 0 else args.alpha
@@ -288,7 +289,7 @@ def main():
                 line_update = ' ==> updating the best accuracy' if is_best else ''
                 line_best = "Best score {} vs current score {}".format(best_prec1, prec1) + line_update
                 print(Fore.YELLOW + line_best)
-                val_short_file.write('%.3f\n' % prec1)
+                # val_short_file.write('%.3f\n' % prec1)
 
                 best_prec1 = max(prec1, best_prec1)
 
@@ -320,17 +321,17 @@ def main():
     # --- write the total time to log files ---#
     line_time = 'total time: {:.3f} '.format(end_train - start_train)
 
-    train_file.write(line_time)
-    train_short_file.write(line_time)
+    # train_file.write(line_time)
+    # train_short_file.write(line_time)
 
     # --- close log files ---#
     train_file.close()
     train_short_file.close()
 
     if target_set.labels_available:
-        val_best_file.write('%.3f\n' % best_prec1)
-        val_file.write(line_time)
-        val_short_file.write(line_time)
+        # val_best_file.write('%.3f\n' % best_prec1)
+        # val_file.write(line_time)
+        # val_short_file.write(line_time)
         val_file.close()
         val_short_file.close()
 
