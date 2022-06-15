@@ -21,6 +21,10 @@ class attentionModel(nn.Module):
                      Variable(torch.zeros(inputVariable.size(1), 1, 7, 7).cpu()))
         state_inp = (Variable(torch.zeros((inputVariable.size(1), self.mem_size, 7, 7)).cpu()),
                  Variable(torch.zeros((inputVariable.size(1), self.mem_size, 7, 7)).cpu()))
+        # state_att = (Variable(torch.zeros(inputVariable.size(1), 1, 7, 7).cuda()),
+        #              Variable(torch.zeros(inputVariable.size(1), 1, 7, 7).cuda()))
+        # state_inp = (Variable(torch.zeros((inputVariable.size(1), self.mem_size, 7, 7)).cuda()),
+        #              Variable(torch.zeros((inputVariable.size(1), self.mem_size, 7, 7)).cuda()))
         for t in range(inputVariable.size(0)):
             logit, feature_conv, x = self.resNet(inputVariable[t])
             bz, nc, h, w = feature_conv.size()
