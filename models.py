@@ -4,6 +4,8 @@ from torch.nn.init import *
 from torch.autograd import Function
 import torch.nn as nn
 import torch.nn.functional as F
+import torch_xla
+import torch_xla.core.xla_model as xm
 import torchvision
 import TRNmodule
 import math
@@ -15,6 +17,8 @@ from LSTA.attentionModule import attentionModel
 
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
+
+dev = xm.xla_device()
 
 init(autoreset=True)
 
@@ -439,7 +443,7 @@ class VideoModel(nn.Module):
 			feat_fc_video = feat_fc_video.squeeze(2)  # 16 x 3 x 1 x 512 --> 16 x 3 x 512
 
 			hidden_temp = torch.zeros(self.n_layers * self.n_directions, feat_fc_video.size(0),
-									  self.hidden_dim // self.n_directions).cpu()
+									  self.hidden_dim // self.n_directions, device = dev)
 
 			if self.rnn_cell == 'LSTM':
 				hidden_init = (hidden_temp, hidden_temp)

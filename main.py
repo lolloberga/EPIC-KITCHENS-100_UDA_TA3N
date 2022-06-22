@@ -8,6 +8,8 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import torch.optim
 from torch.nn.utils import clip_grad_norm_
+import torch_xla
+import torch_xla.core.xla_model as xm
 
 from dataset import TSNDataSet, TSNSpatialDataSet
 from models import VideoModel
@@ -36,7 +38,7 @@ gpu_count = torch.cuda.device_count()
 
 
 def main():
-    global args, writer_train, writer_val
+    global args, writer_train, writer_val, dev
 
     best_prec1 = 0
     args = parser.parse_args()
@@ -79,6 +81,9 @@ def main():
     ####class_names = [line.strip().split(' ', 1)[1] for line in open(args.class_file)]
     ####num_class = len(class_names)
 
+    # === Setup TPU device ===#
+    dev = xm.xla_device()
+
     # New approach
     num_class_str = args.num_class.split(",")
     # single class
@@ -111,8 +116,7 @@ def main():
                        use_attn=args.use_attn, n_attn=args.n_attn, use_attn_frame=args.use_attn_frame,
                        verbose=args.verbose, share_params=args.share_params, mem_size=args.mem_size, outpool_size=args.outPool_size)
 
-    model = torch.nn.DataParallel(model, args.gpus).cpu()
-    #model = torch.nn.DataParallel(model, args.gpus).cuda()
+    model = torch.nn.DataParallel(model, args.gpus).to(dev)
 
     if args.optimizer == 'SGD':
         print(Fore.YELLOW + 'using SGD')
@@ -150,10 +154,6 @@ def main():
         train_short_file = open(path_exp + 'train_short.log', 'a')
         val_file = open(path_exp + 'val.log', 'a')
         val_short_file = open(path_exp + 'val_short.log', 'a')
-        # train_file.write('========== start: ' + str(start_epoch) + '\n')  # separation line
-        # train_short_file.write('========== start: ' + str(start_epoch) + '\n')
-        # val_file.write('========== start: ' + str(start_epoch) + '\n')
-        # val_short_file.write('========== start: ' + str(start_epoch) + '\n')
     else:
         train_short_file = open(path_exp + 'train_short.log', 'w')
         val_short_file = open(path_exp + 'val_short.log', 'w')
@@ -246,10 +246,8 @@ def main():
     # --- Optimizer ---#
     # define loss function (criterion) and optimizer
     if args.loss_type == 'nll':
-        criterion = torch.nn.CrossEntropyLoss().cpu()
-        criterion_domain = torch.nn.CrossEntropyLoss().cpu()
-        #criterion = torch.nn.CrossEntropyLoss().cuda()
-        #criterion_domain = torch.nn.CrossEntropyLoss().cuda()
+        criterion = torch.nn.CrossEntropyLoss().to(dev)
+        criterion_domain = torch.nn.CrossEntropyLoss().to(dev)
     else:
         raise ValueError("Unknown loss type")
 
@@ -276,9 +274,9 @@ def main():
         for params in model.module.lsta_model.classifier.parameters():
             params.requires_grad = True
             train_params += [params]
-        model.module.lsta_model.cpu()
+        model.module.lsta_model.to(dev)
         # Initial setup
-        model.module.lsta_model.set_loss_fn(nn.CrossEntropyLoss())
+        model.module.lsta_model.set_loss_fn(nn.CrossEntropyLoss().to(dev))
         model.module.lsta_model.set_optimizer_fn(torch.optim.Adam(train_params, lr=args.lr, weight_decay=5e-4, eps=1e-4))
         model.module.lsta_model.set_optim_scheduler(torch.optim.lr_scheduler.MultiStepLR(model.module.lsta_model.optimizer_fn, milestones=args.lr_steps, gamma=args.lr_decay))
 
@@ -390,14 +388,10 @@ def main():
         writer_val.close()
 
     if args.save_attention >= 0:
-        np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.cpu().
+        np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.to(dev).
                     detach().numpy(), fmt="%s")
-        np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.cpu().
+        np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.to(dev).
                     detach().numpy(), fmt="%s")
-        #np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.cuda().
-        #           detach().numpy(), fmt="%s")
-        #np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.cuda().
-        #           detach().numpy(), fmt="%s")
 
 
 def train(num_class, source_loader, target_loader, model, criterion, criterion_domain, optimizer, epoch, log, log_short,
@@ -425,8 +419,10 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
     else:
         model.module.partialBN(True)
 
+    ''' * It's not needed, 'cause there is already the TA3N's optimizer
     if args.use_attn == 'LSTA':
         model.module.lsta_model.optim_scheduler.step()
+    '''
 
     # switch to train mode
     model.train()
@@ -496,11 +492,11 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         data_time.update(time.time() - end)
 
         #source_label_verb = source_label.cuda()
-        source_label_verb = source_label.cpu()  # pytorch 0.4.X
+        source_label_verb = source_label.to(dev)  # pytorch 0.4.X
         #source_label_noun = source_label[1].cpu()  # pytorch 0.4.X
 
         #target_label_verb = target_label.cuda()  # pytorch 0.4.X
-        target_label_verb = target_label.cpu()  # pytorch 0.4.X
+        target_label_verb = target_label.to(dev)  # pytorch 0.4.X
         #target_label_noun = target_label[1].cpu()  # pytorch 0.4.X
 
         if args.baseline_type == 'frame':
@@ -529,9 +525,9 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
 
             # ------ calculate the loss function ------#
             # 1. calculate the classification loss
-            out_verb = out_source_verb
+            out_verb = out_source_verb.to(dev)
             out_noun = out_source_noun
-            label_verb = label_source_verb
+            label_verb = label_source_verb.to(dev)
             #label_noun = label_source_noun
 
             # MCD not used
@@ -563,8 +559,8 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         # ====== forward pass data if is there LSTA======#
         if args.use_attn == 'LSTA':
             model.module.lsta_model.optimizer_fn.zero_grad()
-            sourceVariable = source_data.permute(1, 0, 2, 3, 4)
-            targetVariable = target_data.permute(1, 0, 2, 3, 4)
+            sourceVariable = source_data.permute(1, 0, 2, 3, 4).to(dev)
+            targetVariable = target_data.permute(1, 0, 2, 3, 4).to(dev)
             _, source_features_avgpool = model.module.lsta_model(sourceVariable)
             _, target_features_avgpool = model.module.lsta_model(targetVariable)
             source_data = source_features_avgpool
@@ -572,7 +568,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
 
         # ====== forward pass data ======#
         attn_source, out_source, out_source_2, pred_domain_source, feat_source, attn_target, out_target, out_target_2, pred_domain_target, feat_target = model(
-            source_data, target_data, beta_new, mu, is_train=True, reverse=False)
+            source_data.to(dev), target_data.to(dev), beta_new, mu, is_train=True, reverse=False)
 
         # ignore dummy tensors
         attn_source, out_source, out_source_2, pred_domain_source, feat_source = removeDummy(attn_source, out_source,
@@ -621,9 +617,9 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
 
         # ====== calculate the loss function ======#
         # 1. calculate the classification loss
-        out_verb = out_source[0]
-        out_noun = out_source[1]
-        label_verb = label_source_verb
+        out_verb = out_source[0].to(dev)
+        out_noun = out_source[1].to(dev)
+        label_verb = label_source_verb.to(dev)
         #label_noun = label_source_noun
 
         # Sv not used
@@ -647,10 +643,19 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         # if args.ens_DA == 'MCD' and args.use_target != 'none':
         #	loss_classification += criterion(out_source_2, label)
 
+        # TODO: da eliminare
+        print('Calcolo minaccioso, size loss_verb {}'.format(loss_verb.shape))
+        summ = count = 0
+        val = loss_verb.item()
+        summ += val * out_verb.size(0)
+        count += out_verb.size(0)
+        avg = summ / count
+
         losses_c_verb.update(loss_verb.item(), out_verb.size(0))  # pytorch 0.4.X
         #losses_c_noun.update(loss_noun.item(), out_noun.size(0))  # pytorch 0.4.X
         loss = loss_classification
         losses_c.update(loss_classification.item(), out_verb.size(0))
+        print('Fine update')
 
         # 2. calculate the loss for DA
         # (I) discrepancy-based approach: discrepancy loss
@@ -730,7 +735,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                     domain_label = torch.cat((source_domain_label, target_domain_label), 0)
 
                     #domain_label = domain_label.cuda()
-                    domain_label = domain_label.cpu()
+                    domain_label = domain_label.to(dev)
 
                     pred_domain = torch.cat((pred_domain_source_single, pred_domain_target_single), 0)
                     pred_domain_all.append(pred_domain)
@@ -889,8 +894,8 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
 
             #attn_epoch_source = torch.cat((attn_epoch_source, attn_source.cuda()))
             #attn_epoch_target = torch.cat((attn_epoch_target, attn_target.cuda()))
-            attn_epoch_source = torch.cat((attn_epoch_source, attn_source.cpu()))
-            attn_epoch_target = torch.cat((attn_epoch_target, attn_target.cpu()))
+            attn_epoch_source = torch.cat((attn_epoch_source, attn_source.to(dev)))
+            attn_epoch_target = torch.cat((attn_epoch_target, attn_target.to(dev)))
 
     # update the embedding every epoch
     if args.tensorboard:
@@ -952,7 +957,7 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
             val_data = torch.cat((val_data, val_data_dummy))'''
 
         #val_label_verb = val_label.cuda()
-        val_label_verb = val_label.cpu()
+        val_label_verb = val_label.to(dev)
         # val_label_noun = val_label[1].cpu()
         with torch.no_grad():
 

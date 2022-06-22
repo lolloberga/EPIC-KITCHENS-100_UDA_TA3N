@@ -1,1 +1,0 @@
-epic-5seg-disDA_none-alpha_0-advDA_RevGrad-beta_0.75_0.75_0.5-useBN_none-addlossDA_attentive_entropy-gamma_0.003-ensDA_none-mu_0-useAttn_TransAttn-n_attn_1

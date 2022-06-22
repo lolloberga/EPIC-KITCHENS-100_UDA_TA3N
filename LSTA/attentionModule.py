@@ -1,8 +1,9 @@
 from torch.autograd import Variable
+import torch_xla
+import torch_xla.core.xla_model as xm
 from LSTA.ConvLSTACell import *
 from LSTA import resNet
 from tqdm import tqdm
-
 
 class attentionModel(nn.Module):
     def __init__(self, num_classes=51, mem_size=512, c_cam_classes=1000):
@@ -18,16 +19,17 @@ class attentionModel(nn.Module):
         #todo: implementare ulteriori livelli della rete (Sudakaran email)
 
         # static params use from external methods
+        self.dev                = xm.xla_device()
         self.loss_fn            = None
         self.optimizer_fn       = None
         self.optim_scheduler    = None
 
     def forward(self, features):
         # Features = Tensor (32, 5, 2048, 7, 7)
-        state_att = (Variable(torch.zeros(features.size(1), 1, 7, 7).cuda()),
-                     Variable(torch.zeros(features.size(1), 1, 7, 7).cuda()))
-        state_inp = (Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).cuda()),
-                     Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).cuda()))
+        state_att = (Variable(torch.zeros(features.size(1), 1, 7, 7).to(self.dev)),
+                     Variable(torch.zeros(features.size(1), 1, 7, 7).to(self.dev)))
+        state_inp = (Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).to(self.dev)),
+                     Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).to(self.dev)))
 
         for t in tqdm(range(features.size(0))):
             features_reshaped = features[t, :, :, :, :]

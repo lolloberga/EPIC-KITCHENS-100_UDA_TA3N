@@ -8,8 +8,8 @@ LEGENDA:
 * TARGET    = test
 '''
 
-ego_path = "/content/drive/MyDrive/Spatial features/" # check the path for prextracted model_feature is consistent
-epic_path = "/content/drive/MyDrive/Spatial features/"
+ego_path = "/content/drive/MyDrive/EPIC_KITCHEN DATASET/Spatial features/" # check the path for prextracted model_feature is consistent
+epic_path = "/content/drive/MyDrive/EPIC_KITCHEN DATASET/Spatial features/"
 
 CURRENT_DOMAIN      = "D3"
 TARGET_DOMAIN       = "D3"
@@ -185,7 +185,7 @@ parser.add_argument('--resume_hp', default=RES, action="store_true",
                     help='whether to use the saved hyper-parameters')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
-parser.add_argument('--exp_path', type=str, default=epic_path + "model/action-model/",
+parser.add_argument('--exp_path', type=str, default=epic_path + "LSTA/action-model/",
                     help='full path of the experiment folder')
 parser.add_argument('--gpus', nargs='+', type=int, default=None)
 parser.add_argument('--flow_prefix', default="", type=str)

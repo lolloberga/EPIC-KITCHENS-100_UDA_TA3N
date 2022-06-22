@@ -9,6 +9,8 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 from torch.autograd import Variable
 from torch.nn.utils import clip_grad_norm_
+import torch_xla
+import torch_xla.core.xla_model as xm
 
 from LSTA.attentionModule import attentionModel
 from dataset import TSNDataSet, TSNSpatialDataSet
@@ -73,6 +75,9 @@ def main():
     print(Fore.GREEN + 'train source data:', args.train_source_data)
     print(Fore.GREEN + 'train target data:', args.train_target_data)
     print("------------------------------")
+
+    # === Setup TPU device ===#
+    dev = xm.xla_device()
 
     # determine the categories
     # want to allow multi-label classes.
@@ -183,7 +188,7 @@ def main():
         train_params += [params]
 
     model.classifier.train(True)
-    model.cuda()
+    model.to(dev)
 
     # === Optimizer === #
     loss_fn = nn.CrossEntropyLoss()
@@ -208,23 +213,25 @@ def main():
         data_loader = enumerate(zip(source_loader, target_loader))
 
         for i, ((source_data, source_label, source_id), (target_data, target_label, target_id)) in data_loader:
+            if source_data.size(0) != target_label.size(0):
+              continue
             train_iter += 1
             iterPerEpoch += 1
             optimizer_fn.zero_grad()
             trainSamples += source_data.size(2)
             sourceVariable = source_data.permute(1, 0, 2, 3, 4)
-            output_label, features_avgpool = model(sourceVariable)
-            loss = loss_fn(output_label, target_label)
+            output_label, features_avgpool = model(sourceVariable.to(dev))
+            print('Output predicted size {}'.format(output_label.size()))
+            print('Target label size {}'.format(target_label.size()))
+            loss = loss_fn(output_label.to(dev), target_label.to(dev))
             loss.backward()
             optimizer_fn.step()
             _, predicted = torch.max(output_label.data, 1)
-            numCorrTrain += (predicted == target_label.cuda()).sum()
+            numCorrTrain += (predicted == target_label.to(dev)).sum()
             loss_value = loss.item()  # loss.data[0]
             epoch_loss += loss_value
             if train_iter%1 == 0:
                 print('Training loss after {} iterations = {} '.format(train_iter, loss_value))
-                print(Fore.YELLOW + 'Average training loss after {} epoch = {} '.format(epoch + 1, (epoch_loss / iterPerEpoch)))
-                print(Fore.YELLOW + 'Training accuracy after {} epoch = {}% '.format(epoch + 1, (numCorrTrain / trainSamples) * 100))
         avg_loss = epoch_loss / iterPerEpoch
         trainAccuracy = (numCorrTrain / trainSamples) * 100
         print('Average training loss after {} epoch = {} '.format(epoch + 1, avg_loss))
@@ -241,11 +248,11 @@ def main():
                 print('testing inst = {}'.format(i))
                 test_iter += 1
                 test_samples += val_data.size(0)
-                output_label, _ = model(val_data)
-                test_loss = loss_fn(output_label, val_label)
+                output_label, _ = model(val_data.to(dev))
+                test_loss = loss_fn(output_label.to(dev), val_label.to(dev))
                 test_loss_epoch += test_loss.data[0]
                 _, predicted = torch.max(output_label.data, 1)
-                numCorr += (predicted == val_label.cuda()).sum()
+                numCorr += (predicted == val_label.to(dev)).sum()
             test_accuracy = (numCorr / test_samples) * 100
             avg_test_loss = test_loss_epoch / test_iter
             print('Test Loss after {} epochs, loss = {}'.format(epoch + 1, avg_test_loss))
