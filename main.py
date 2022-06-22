@@ -9,7 +9,7 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 from torch.nn.utils import clip_grad_norm_
 
-from dataset import TSNDataSet
+from dataset import TSNDataSet, TSNSpatialDataSet
 from models import VideoModel
 from loss import *
 # from opts import parser
@@ -99,6 +99,7 @@ def main():
         writer_val = SummaryWriter(path_exp + '/tensorboard_val')  # for tensorboardX
     # === initialize the model ===#
     print(Fore.CYAN + 'preparing the model......')
+
     model = VideoModel(num_class, args.baseline_type, args.frame_aggregation, args.modality,
                        train_segments=args.num_segments, val_segments=args.val_segments,
                        base_model=args.arch, path_pretrained=args.pretrained,
@@ -108,10 +109,10 @@ def main():
                        ens_DA=args.ens_DA if args.use_target != 'none' else 'none',
                        n_rnn=args.n_rnn, rnn_cell=args.rnn_cell, n_directions=args.n_directions, n_ts=args.n_ts,
                        use_attn=args.use_attn, n_attn=args.n_attn, use_attn_frame=args.use_attn_frame,
-                       verbose=args.verbose, share_params=args.share_params)
+                       verbose=args.verbose, share_params=args.share_params, mem_size=args.mem_size, outpool_size=args.outPool_size)
 
-    # model = torch.nn.DataParallel(model, args.gpus).cpu()
-    model = torch.nn.DataParallel(model, args.gpus).cuda()
+    model = torch.nn.DataParallel(model, args.gpus).cpu()
+    #model = torch.nn.DataParallel(model, args.gpus).cuda()
 
     if args.optimizer == 'SGD':
         print(Fore.YELLOW + 'using SGD')
@@ -182,9 +183,10 @@ def main():
     num_source_train = round(num_max_iter * args.batch_size[0]) if args.copy_list[0] == 'Y' else num_source
     num_target_train = round(num_max_iter * args.batch_size[1]) if args.copy_list[1] == 'Y' else num_target
 
-    train_source_data = Path(args.train_source_data + ".pkl")
     train_source_list = Path(args.train_source_list)
-    source_set = TSNDataSet(train_source_data, train_source_list,
+    if args.use_spatial_features == 'Y':
+        train_source_data = Path(args.train_source_data_spatial + ".hkl")
+        source_set = TSNSpatialDataSet(train_source_data, train_source_list,
                             num_dataload=num_source_train,
                             num_segments=args.num_segments,
                             total_segments=5,
@@ -194,23 +196,48 @@ def main():
                             random_shift=False,
                             test_mode=True
                             )
+    else:
+        train_source_data = Path(args.train_source_data + ".pkl")
+        source_set = TSNDataSet(train_source_data, train_source_list,
+                                num_dataload=num_source_train,
+                                num_segments=args.num_segments,
+                                total_segments=5,
+                                new_length=data_length, modality=args.modality,
+                                image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
+                                                                                "RGBDiffplus"] else args.flow_prefix + "{}_{:05d}.t7",
+                                random_shift=False,
+                                test_mode=True
+                                )
 
     source_sampler = torch.utils.data.sampler.RandomSampler(source_set)
     source_loader = torch.utils.data.DataLoader(source_set, batch_size=args.batch_size[0], shuffle=False,
                                                 sampler=source_sampler, num_workers=args.workers, pin_memory=True)
 
-    train_target_data = Path(args.train_target_data + ".pkl")
     train_target_list = Path(args.train_target_list)
-    target_set = TSNDataSet(train_target_data, train_target_list,
-                            num_dataload=num_target_train,
-                            num_segments=args.num_segments,
-                            total_segments=5,
-                            new_length=data_length, modality=args.modality,
-                            image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
-                                                                            "RGBDiffplus"] else args.flow_prefix + "{}_{:05d}.t7",
-                            random_shift=False,
-                            test_mode=True,
-                            )
+    if args.use_spatial_features == 'Y':
+        train_target_data = Path(args.train_target_data_spatial + ".hkl")
+        target_set = TSNSpatialDataSet(train_target_data, train_target_list,
+                                       num_dataload=num_target_train,
+                                       num_segments=args.num_segments,
+                                       total_segments=5,
+                                       new_length=data_length, modality=args.modality,
+                                       image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
+                                                                                       "RGBDiffplus"] else args.flow_prefix + "{}_{:05d}.t7",
+                                       random_shift=False,
+                                       test_mode=True,
+                                       )
+    else:
+        train_target_data = Path(args.train_target_data + ".pkl")
+        target_set = TSNDataSet(train_target_data, train_target_list,
+                                num_dataload=num_target_train,
+                                num_segments=args.num_segments,
+                                total_segments=5,
+                                new_length=data_length, modality=args.modality,
+                                image_tmpl="img_{:05d}.t7" if args.modality in ["RGB", "RGBDiff", "RGBDiff2",
+                                                                                "RGBDiffplus"] else args.flow_prefix + "{}_{:05d}.t7",
+                                random_shift=False,
+                                test_mode=True,
+                                )
 
     target_sampler = torch.utils.data.sampler.RandomSampler(target_set)
     target_loader = torch.utils.data.DataLoader(target_set, batch_size=args.batch_size[1], shuffle=False,
@@ -219,10 +246,10 @@ def main():
     # --- Optimizer ---#
     # define loss function (criterion) and optimizer
     if args.loss_type == 'nll':
-        # criterion = torch.nn.CrossEntropyLoss().cpu()
-        # criterion_domain = torch.nn.CrossEntropyLoss().cpu()
-        criterion = torch.nn.CrossEntropyLoss().cuda()
-        criterion_domain = torch.nn.CrossEntropyLoss().cuda()
+        criterion = torch.nn.CrossEntropyLoss().cpu()
+        criterion_domain = torch.nn.CrossEntropyLoss().cpu()
+        #criterion = torch.nn.CrossEntropyLoss().cuda()
+        #criterion_domain = torch.nn.CrossEntropyLoss().cuda()
     else:
         raise ValueError("Unknown loss type")
 
@@ -237,6 +264,23 @@ def main():
 
     attn_source_all = torch.Tensor()
     attn_target_all = torch.Tensor()
+
+    if args.use_attn == 'LSTA': # Some default configurations are needed
+        train_params = []
+        model.module.lsta_model.train(False)
+        for params in model.module.lsta_model.parameters():
+            params.requires_grad = False
+        for params in model.module.lsta_model.lsta_cell.parameters():
+            params.requires_grad = True
+            train_params += [params]
+        for params in model.module.lsta_model.classifier.parameters():
+            params.requires_grad = True
+            train_params += [params]
+        model.module.lsta_model.cpu()
+        # Initial setup
+        model.module.lsta_model.set_loss_fn(nn.CrossEntropyLoss())
+        model.module.lsta_model.set_optimizer_fn(torch.optim.Adam(train_params, lr=args.lr, weight_decay=5e-4, eps=1e-4))
+        model.module.lsta_model.set_optim_scheduler(torch.optim.lr_scheduler.MultiStepLR(model.module.lsta_model.optimizer_fn, milestones=args.lr_steps, gamma=args.lr_decay))
 
     for epoch in range(start_epoch, args.epochs + 1):
         # print parameters of optimizer
@@ -340,14 +384,14 @@ def main():
         writer_val.close()
 
     if args.save_attention >= 0:
-        # np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.cpu().
-        #            detach().numpy(), fmt="%s")
-        # np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.cpu().
-        #            detach().numpy(), fmt="%s")
-        np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.cuda().
-                   detach().numpy(), fmt="%s")
-        np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.cuda().
-                   detach().numpy(), fmt="%s")
+        np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.cpu().
+                    detach().numpy(), fmt="%s")
+        np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.cpu().
+                    detach().numpy(), fmt="%s")
+        #np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.cuda().
+        #           detach().numpy(), fmt="%s")
+        #np.savetxt('attn_target_' + str(args.save_attention) + '.log', attn_target_all.cuda().
+        #           detach().numpy(), fmt="%s")
 
 
 def train(num_class, source_loader, target_loader, model, criterion, criterion_domain, optimizer, epoch, log, log_short,
@@ -374,6 +418,9 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         model.module.partialBN(False)
     else:
         model.module.partialBN(True)
+
+    if args.use_attn == 'LSTA':
+        model.module.lsta_model.optim_scheduler.step()
 
     # switch to train mode
     model.train()
@@ -442,12 +489,12 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         # measure data loading time
         data_time.update(time.time() - end)
 
-        source_label_verb = source_label.cuda()
-        # source_label_verb = source_label.cpu()  # pytorch 0.4.X
+        #source_label_verb = source_label.cuda()
+        source_label_verb = source_label.cpu()  # pytorch 0.4.X
         #source_label_noun = source_label[1].cpu()  # pytorch 0.4.X
 
-        target_label_verb = target_label.cuda()  # pytorch 0.4.X
-        # target_label_verb = target_label.cpu()  # pytorch 0.4.X
+        #target_label_verb = target_label.cuda()  # pytorch 0.4.X
+        target_label_verb = target_label.cpu()  # pytorch 0.4.X
         #target_label_noun = target_label[1].cpu()  # pytorch 0.4.X
 
         if args.baseline_type == 'frame':
@@ -506,6 +553,16 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                     print("clipping gradient: {} with coef {}".format(total_norm, args.clip_gradient / total_norm))
 
             optimizer.step()
+
+        # ====== forward pass data if is there LSTA======#
+        if args.use_attn == 'LSTA':
+            model.module.lsta_model.optimizer_fn.zero_grad()
+            sourceVariable = source_data.permute(1, 0, 2, 3, 4)
+            targetVariable = target_data.permute(1, 0, 2, 3, 4)
+            _, source_features_avgpool = model.module.lsta_model(sourceVariable)
+            _, target_features_avgpool = model.module.lsta_model(targetVariable)
+            source_data = source_features_avgpool
+            target_data = target_features_avgpool
 
         # ====== forward pass data ======#
         attn_source, out_source, out_source_2, pred_domain_source, feat_source, attn_target, out_target, out_target_2, pred_domain_target, feat_target = model(
@@ -666,8 +723,8 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                     target_domain_label = torch.ones(pred_domain_target_single.size(0)).long()
                     domain_label = torch.cat((source_domain_label, target_domain_label), 0)
 
-                    domain_label = domain_label.cuda()
-                    # domain_label = domain_label.cpu()
+                    #domain_label = domain_label.cuda()
+                    domain_label = domain_label.cpu()
 
                     pred_domain = torch.cat((pred_domain_source_single, pred_domain_target_single), 0)
                     pred_domain_all.append(pred_domain)
@@ -824,10 +881,10 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
             attn_source = attn_source[source_label == args.save_attention]
             attn_target = attn_target[target_label == args.save_attention]
 
-            attn_epoch_source = torch.cat((attn_epoch_source, attn_source.cuda()))
-            attn_epoch_target = torch.cat((attn_epoch_target, attn_target.cuda()))
-            # attn_epoch_source = torch.cat((attn_epoch_source, attn_source.cpu()))
-            # attn_epoch_target = torch.cat((attn_epoch_target, attn_target.cpu()))
+            #attn_epoch_source = torch.cat((attn_epoch_source, attn_source.cuda()))
+            #attn_epoch_target = torch.cat((attn_epoch_target, attn_target.cuda()))
+            attn_epoch_source = torch.cat((attn_epoch_source, attn_source.cpu()))
+            attn_epoch_target = torch.cat((attn_epoch_target, attn_target.cpu()))
 
     # update the embedding every epoch
     if args.tensorboard:
@@ -888,8 +945,8 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
             val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2))
             val_data = torch.cat((val_data, val_data_dummy))'''
 
-        val_label_verb = val_label.cuda()
-        # val_label_verb = val_label.cpu()
+        #val_label_verb = val_label.cuda()
+        val_label_verb = val_label.cpu()
         # val_label_noun = val_label[1].cpu()
         with torch.no_grad():
 
