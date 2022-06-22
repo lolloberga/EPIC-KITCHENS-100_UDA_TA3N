@@ -72,13 +72,14 @@ wheel==0.33.6
 widgetsnbextension==3.5.1
 zipp==2.2.0
 docopt==0.6.2
-epic-kitchens==1.7.0
-gulpio==540.66
 jinja2==2.10.1
 opencv-python==4.1.2.30
 pandas==0.25.1
 protobuf==3.9.2
 pyyaml==5.1.2
 sh==1.12.14
+epic-kitchens
+hickle
+colorama
 tensorboardx==1.8
 tqdm==4.36.1

@@ -183,7 +183,7 @@ def main():
         train_params += [params]
 
     model.classifier.train(True)
-    model.cpu()
+    model.cuda()
 
     # === Optimizer === #
     loss_fn = nn.CrossEntropyLoss()
@@ -218,7 +218,7 @@ def main():
             loss.backward()
             optimizer_fn.step()
             _, predicted = torch.max(output_label.data, 1)
-            numCorrTrain += (predicted == target_label.cpu()).sum()
+            numCorrTrain += (predicted == target_label.cuda()).sum()
             loss_value = loss.item()  # loss.data[0]
             epoch_loss += loss_value
             if train_iter%1 == 0:
@@ -245,7 +245,7 @@ def main():
                 test_loss = loss_fn(output_label, val_label)
                 test_loss_epoch += test_loss.data[0]
                 _, predicted = torch.max(output_label.data, 1)
-                numCorr += (predicted == val_label.cpu()).sum()
+                numCorr += (predicted == val_label.cuda()).sum()
             test_accuracy = (numCorr / test_samples) * 100
             avg_test_loss = test_loss_epoch / test_iter
             print('Test Loss after {} epochs, loss = {}'.format(epoch + 1, avg_test_loss))

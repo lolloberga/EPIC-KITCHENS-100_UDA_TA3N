@@ -24,10 +24,10 @@ class attentionModel(nn.Module):
 
     def forward(self, features):
         # Features = Tensor (32, 5, 2048, 7, 7)
-        state_att = (Variable(torch.zeros(features.size(1), 1, 7, 7).cpu()),
-                     Variable(torch.zeros(features.size(1), 1, 7, 7).cpu()))
-        state_inp = (Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).cpu()),
-                     Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).cpu()))
+        state_att = (Variable(torch.zeros(features.size(1), 1, 7, 7).cuda()),
+                     Variable(torch.zeros(features.size(1), 1, 7, 7).cuda()))
+        state_inp = (Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).cuda()),
+                     Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).cuda()))
 
         for t in tqdm(range(features.size(0))):
             features_reshaped = features[t, :, :, :, :]
