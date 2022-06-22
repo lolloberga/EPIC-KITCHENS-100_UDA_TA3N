@@ -204,7 +204,7 @@ def main():
     start_epoch = 1
 
     for epoch in range(start_epoch, args.epochs + 1):
-        print('Epoch {}'.format(epoch))
+        print(Fore.GREEN + 'Epoch {}'.format(epoch))
 
         optim_scheduler.step()
         epoch_loss = 0
@@ -251,7 +251,7 @@ def main():
                 valdataVariable = val_data.permute(1, 0, 2, 3, 4)
                 output_label, _ = model(valdataVariable.to(dev))
                 test_loss = loss_fn(output_label.to(dev), val_label.to(dev))
-                test_loss_epoch += test_loss.data[0]
+                test_loss_epoch += test_loss.item()
                 _, predicted = torch.max(output_label.data, 1)
                 numCorr += (predicted == val_label.to(dev)).sum()
             test_accuracy = (numCorr / test_samples) * 100
@@ -268,7 +268,7 @@ def main():
 
     # --- write the total time to log files ---#
     line_time = 'total time: {:.3f} '.format(end_train - start_train)
-
+    print(line_time)
     # train_file.write(line_time)
     # train_short_file.write(line_time)
 
