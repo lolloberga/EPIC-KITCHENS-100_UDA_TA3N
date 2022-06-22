@@ -66,7 +66,7 @@ class VideoModel(nn.Module):
 				crop_num=1, partial_bn=True, verbose=True, add_fc=1, fc_dim=1024,
 				n_rnn=1, rnn_cell='LSTM', n_directions=1, n_ts=5,
 				use_attn='TransAttn', n_attn=1, use_attn_frame='none',
-				share_params='Y', mem_size=512, outpool_size=100):
+				share_params='Y', mem_size=2048, outpool_size=100):
 		super(VideoModel, self).__init__()
 		self.modality = modality
 		self.train_segments = train_segments
@@ -209,7 +209,6 @@ class VideoModel(nn.Module):
 			normal_(self.fc_classifier_target_noun.weight, 0, std)
 			constant_(self.fc_classifier_target_noun.bias, 0)
 
-
 		# BN for the above layers
 		if self.use_bn != 'none':  # S & T: use AdaBN (ICLRW 2017) approach
 			self.bn_shared_S = nn.BatchNorm1d(feat_shared_dim)  # BN for the shared layers
@@ -224,14 +223,11 @@ class VideoModel(nn.Module):
 				self.rnn = nn.LSTM(feat_frame_dim, self.hidden_dim//self.n_directions, self.n_layers, batch_first=True, bidirectional=bool(int(self.n_directions/2)))
 			elif self.rnn_cell == 'GRU':
 				self.rnn = nn.GRU(feat_frame_dim, self.hidden_dim//self.n_directions, self.n_layers, batch_first=True, bidirectional=bool(int(self.n_directions/2)))
-			elif self.rnn_cell == 'LSTA':
-				self.rnn = attentionModel(num_classes=num_class[0], mem_size=self.mem_size, c_cam_classes=self.outpool_size)
 
 			# initialization
-			if self.rnn_cell is not 'LSTA':
-				for p in range(self.n_layers):
-					kaiming_normal_(self.rnn.all_weights[p][0])
-					kaiming_normal_(self.rnn.all_weights[p][1])
+			for p in range(self.n_layers):
+				kaiming_normal_(self.rnn.all_weights[p][0])
+				kaiming_normal_(self.rnn.all_weights[p][1])
 
 			self.bn_before_rnn = nn.BatchNorm2d(1)
 			self.bn_after_rnn = nn.BatchNorm2d(1)
@@ -354,6 +350,8 @@ class VideoModel(nn.Module):
 				nn.Tanh(),
 				nn.Linear(feat_aggregated_dim, 1)
 				)
+		if self.use_attn == 'LSTA':
+			self.lsta_model = attentionModel(num_classes=num_class[0], mem_size=self.mem_size, c_cam_classes=self.outpool_size)
 
 
 	def train(self, mode=True):
@@ -362,6 +360,8 @@ class VideoModel(nn.Module):
 		Override the default train() to freeze the BN parameters
 		:return:
 		"""
+		if self.use_attn == 'LSTA':
+			self.lsta_model.classifier.train(mode)
 		super(VideoModel, self).train(mode)
 		count = 0
 		if self._enable_pbn:
@@ -611,7 +611,7 @@ class VideoModel(nn.Module):
 		feat_all_source.append(feat_fc_source.view((batch_source, num_segments) + feat_fc_source.size()[-1:])) # reshape ==> 1st dim is the batch size
 		feat_all_target.append(feat_fc_target.view((batch_target, num_segments) + feat_fc_target.size()[-1:]))
 
-		if self.add_fc > 1: 
+		if self.add_fc > 1:
 			feat_fc_source = self.fc_feature_shared_2_source(feat_fc_source)
 			feat_fc_target = self.fc_feature_shared_2_target(feat_fc_target) if self.share_params == 'N' else self.fc_feature_shared_2_source(feat_fc_target)
 
@@ -675,7 +675,7 @@ class VideoModel(nn.Module):
 			pred_fc_domain_video_relation_target = self.domain_classifier_relation(feat_fc_video_relation_target, beta)
 
 			# transferable attention
-			if self.use_attn != 'none': # get the attention weighting
+			if self.use_attn != 'none' and self.use_attn != 'LSTA': # get the attention weighting
 				feat_fc_video_relation_source, attn_relation_source = self.get_attn_feat_relation(feat_fc_video_relation_source, pred_fc_domain_video_relation_source, num_segments)
 				feat_fc_video_relation_target, attn_relation_target = self.get_attn_feat_relation(feat_fc_video_relation_target, pred_fc_domain_video_relation_target, num_segments)
 			else:
@@ -757,4 +757,6 @@ class VideoModel(nn.Module):
 			output_source_2 = self.final_output(pred_fc_source, pred_fc_video_source_2, num_segments)
 			output_target_2 = self.final_output(pred_fc_target, pred_fc_video_target_2, num_segments)
 
-		return attn_relation_source, output_source, output_source_2, pred_domain_all_source[::-1], feat_all_source[::-1], attn_relation_target, output_target, output_target_2, pred_domain_all_target[::-1], feat_all_target[::-1] # reverse the order of feature list due to some multi-gpu issues
+		return attn_relation_source, output_source, output_source_2, pred_domain_all_source[::-1], \
+			   feat_all_source[::-1], attn_relation_target, output_target, output_target_2, pred_domain_all_target[::-1], \
+			   feat_all_target[::-1] # reverse the order of feature list due to some multi-gpu issues
