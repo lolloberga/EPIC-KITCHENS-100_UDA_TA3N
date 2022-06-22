@@ -302,8 +302,14 @@ def mainPt2(param):
                     prec1 = prec1_verb_val
                 else:
                     raise Exception("invalid metric to train")
+
+                epoch_robustness = epoch / args.epochs
+                epoch_robustness_bool = epoch_robustness >= 0.5
+                if epoch_robustness == 0.5:
+                    best_prec1 = 0
                 is_best = prec1 > best_prec1
-                if is_best:
+
+                if is_best and epoch_robustness_bool:
                     best_prec1 = prec1
                     print(Fore.RED + 'UPDATE BEST SCORE:', best_prec1)
 
