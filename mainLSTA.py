@@ -231,7 +231,7 @@ def main():
                 print(line)
                 result_file.write(line + '\n')
         avg_loss = epoch_loss / iterPerEpoch
-        trainAccuracy = (numCorrTrain.to(dev) / trainSamples.to(dev)) * 100
+        trainAccuracy = (numCorrTrain / trainSamples) * 100
         line_avg = 'Average training loss after {} epoch = {} '.format(epoch + 1, avg_loss)
         line_acc = 'Training accuracy after {} epoch = {}% '.format(epoch + 1, trainAccuracy)
         print(line_avg)
@@ -255,7 +255,7 @@ def main():
                 test_loss_epoch += test_loss.item()
                 _, predicted = torch.max(output_label.data, 1)
                 numCorr += (predicted == val_label.to(dev)).sum()
-            test_accuracy = (numCorr.to(dev) / test_samples.to(dev)) * 100
+            test_accuracy = (numCorr / test_samples) * 100
             avg_test_loss = test_loss_epoch / test_iter
             line_avg = 'Test Loss after {} epochs, loss = {}'.format(epoch + 1, avg_test_loss)
             line_acc = 'Test Accuracy after {} epochs = {}%'.format(epoch + 1, test_accuracy)
