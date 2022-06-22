@@ -8,34 +8,34 @@ LEGENDA:
 * TARGET    = test
 '''
 
-ego_path = "/home/pol/Desktop/EGO_Project/" # check the path for prextracted model_feature is consistent
-epic_path = "/home/pol/Desktop/EPIC-KITCHENS-100_UDA_TA3N/"
+ego_path = "/Users/lorenzo/University/Polito/ML and DL/EGO_Project/" # check the path for prextracted model_feature is consistent
+epic_path = "/Users/lorenzo/University/Polito/ML and DL/EPIC-KITCHENS-100_UDA_TA3N/"
 
 CURRENT_DOMAIN      = "D3"
 TARGET_DOMAIN       = "D3"
-FRAME_AGGREGATION   = "avgpool"
-CURRENT_MODALITY    = "Flow"
+FRAME_AGGREGATION   = "trn-m"
+CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "none"
-CURRENT_ARCH        = "i3d"
-RNN_CELL            = "LSTM"        #['LSTM', 'GRU', 'LSTA']
+CURRENT_ARCH        = "TSM"
 
 N_EPOCH = 50
 DROP = 0.8
 LEARNING = 3e-2
-BATCH = [32,28, 64]
+BATCH = [32, 32, 64]
 OPTIMIZ = 'SGD'
-LRN_DECAY = 'noob'
-LRN_ADPT = 'dann'
-LRN_STEP = list(range(10,N_EPOCH,10))
+LRN_DECAY = 10
+LRN_ADPT = 'none'
+LRN_STEP = list(range(5, N_EPOCH, 5))
 LRN_DECAY_WEIGHT = 1e-4
 
 RES = False
 
 # Used only during DA
 PLACE_ADV = ['N', 'N', 'N']
-USE_ATTN = 'none'
+USE_ATTN = 'LSTA' # ['none', 'TransAttn', 'general', 'DotProduct', 'LSTA']
 ADV_DA = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
 LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
+USE_SPATIAL_FEATURES = 'Y' if USE_ATTN == 'LSTA' else 'N'
 
 
 parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
@@ -46,26 +46,29 @@ parser.add_argument('--num_class', type=str, default="8,8")
 parser.add_argument('--modality', type=str, default=CURRENT_MODALITY)
 # choices=['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL'])
 parser.add_argument('--train_source_list', type=str,
-                    # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_source_train.pkl")
                     default=ego_path + "train_val/" + CURRENT_DOMAIN + "_train.pkl")
 parser.add_argument('--train_target_list', type=str,
-                    # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_train_timestamps.pkl")
                     default=ego_path + "train_val/" + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_list', type=str,
-                    # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_test_timestamps.pkl")
                     default=ego_path + "train_val/" + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_data', type=str,
-                    # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
                     default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
                             CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 parser.add_argument('--train_source_data', type=str,
-                    # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
                     default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
                             CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train")
 parser.add_argument('--train_target_data', type=str,
-                    # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
                     default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
                             CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
+
+# === Spatial features (hickle files) ===
+parser.add_argument('--train_source_data_spatial', type=str,
+                    default=epic_path + "spatial_feat/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train_"
+                            + CURRENT_MODALITY + '_' + CURRENT_ARCH + "__spatial")
+parser.add_argument('--train_target_data_spatial', type=str,
+                    default=epic_path + "spatial_feat/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_test_"
+                            + CURRENT_MODALITY + '_' + CURRENT_ARCH + "__spatial")
+parser.add_argument('--use_spatial_features', type=str, default=USE_SPATIAL_FEATURES, choices=["N", "Y"])
 
 # ========================= Model Configs ==========================
 parser.add_argument('--train_metric', default="verb", type=str)
@@ -96,13 +99,13 @@ parser.add_argument('--weighted_class_loss', type=str, default='N', choices=['Y'
 # ------ RNN ------
 parser.add_argument('--n_rnn', default=1, type=int, metavar='M',
                     help='number of RNN layers (e.g. 0, 1, 2, ...)')
-parser.add_argument('--rnn_cell', type=str, default=RNN_CELL, choices=['LSTM', 'GRU', 'LSTA'])
+parser.add_argument('--rnn_cell', type=str, default='LSTM', choices=['LSTM', 'GRU'])
 parser.add_argument('--n_directions', type=int, default=1, choices=[1, 2],
                     help='(bi-) direction RNN')
 parser.add_argument('--n_ts', type=int, default=5, help='number of temporal segments')
 
-parser.add_argument('--outPool_size', type=int, default=10, help='size of output pooling for LSTA')
-parser.add_argument('--mem_size', type=int, default=512, help='size of the LSTA cell')
+parser.add_argument('--outPool_size', type=int, default=100, help='size of output pooling for LSTA')
+parser.add_argument('--mem_size', type=int, default=2048, help='size of the LSTA cell')
 
 # ========================= DA Configs ==========================
 parser.add_argument('--share_params', type=str, default='Y', choices=['Y', 'N'])
@@ -117,7 +120,7 @@ parser.add_argument('--use_bn', type=str, default='none', choices=['none', 'AdaB
 parser.add_argument('--ens_DA', type=str, default='none', choices=['none', 'MCD'], help='ensembling-based methods')
 parser.add_argument('--use_attn_frame', type=str, default='none',
                     choices=['none', 'TransAttn', 'general', 'DotProduct'], help='attention-mechanism for frames only')
-parser.add_argument('--use_attn', type=str, default='none', choices=['none', 'TransAttn', 'general', 'DotProduct'],
+parser.add_argument('--use_attn', type=str, default=USE_ATTN, choices=['none', 'TransAttn', 'general', 'DotProduct', 'LSTA'],
                     help='attention-mechanism')
 parser.add_argument('--n_attn', type=int, default=1, help='number of discriminators for transferable attention')
 parser.add_argument('--add_loss_DA', type=str, default='none',
