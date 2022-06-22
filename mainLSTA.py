@@ -28,6 +28,7 @@ import numpy as np
 from tensorboardX import SummaryWriter
 
 from pathlib import Path
+from tqdm import tqdm
 
 np.random.seed(1)
 torch.manual_seed(1)
@@ -203,6 +204,7 @@ def main():
     start_epoch = 1
 
     for epoch in range(start_epoch, args.epochs + 1):
+        print('Epoch {}'.format(epoch))
 
         optim_scheduler.step()
         epoch_loss = 0
@@ -220,9 +222,7 @@ def main():
             optimizer_fn.zero_grad()
             trainSamples += source_data.size(2)
             sourceVariable = source_data.permute(1, 0, 2, 3, 4)
-            output_label, features_avgpool = model(sourceVariable.to(dev))
-            print('Output predicted size {}'.format(output_label.size()))
-            print('Target label size {}'.format(target_label.size()))
+            output_label, _ = model(sourceVariable.to(dev))
             loss = loss_fn(output_label.to(dev), target_label.to(dev))
             loss.backward()
             optimizer_fn.step()
@@ -230,7 +230,7 @@ def main():
             numCorrTrain += (predicted == target_label.to(dev)).sum()
             loss_value = loss.item()  # loss.data[0]
             epoch_loss += loss_value
-            if train_iter%1 == 0:
+            if train_iter%10 == 0:
                 print('Training loss after {} iterations = {} '.format(train_iter, loss_value))
         avg_loss = epoch_loss / iterPerEpoch
         trainAccuracy = (numCorrTrain / trainSamples) * 100
@@ -244,11 +244,12 @@ def main():
             test_iter = 0
             test_samples = 0
             numCorr = 0
-            for i, (val_data, val_label, _) in enumerate(target_data):
+            for i, (val_data, val_label, _) in enumerate(target_loader):
                 print('testing inst = {}'.format(i))
                 test_iter += 1
                 test_samples += val_data.size(0)
-                output_label, _ = model(val_data.to(dev))
+                valdataVariable = val_data.permute(1, 0, 2, 3, 4)
+                output_label, _ = model(valdataVariable.to(dev))
                 test_loss = loss_fn(output_label.to(dev), val_label.to(dev))
                 test_loss_epoch += test_loss.data[0]
                 _, predicted = torch.max(output_label.data, 1)

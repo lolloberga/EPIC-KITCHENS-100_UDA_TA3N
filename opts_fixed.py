@@ -18,7 +18,7 @@ CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "none"
 CURRENT_ARCH        = "TSM"
 
-N_EPOCH = 50
+N_EPOCH = 30
 DROP = 0.8
 LEARNING = 3e-2
 BATCH = [32, 32, 64]
