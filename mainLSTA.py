@@ -111,11 +111,7 @@ def main():
     cudnn.benchmark = True
 
     # --- open log files ---#
-    train_short_file = open(path_exp + 'train_short.log', 'w')
-    val_short_file = open(path_exp + 'val_short.log', 'w')
-    train_file = open(path_exp + 'train.log', 'w')
-    val_file = open(path_exp + 'val.log', 'w')
-    val_best_file = open(path_exp + 'best_val_new.txt', 'a')
+    result_file = open(path_exp + 'result_file.log', 'w')
 
     # === Data loading ===#
     print(Fore.CYAN + 'loading data......')
@@ -231,11 +227,16 @@ def main():
             loss_value = loss.item()  # loss.data[0]
             epoch_loss += loss_value
             if train_iter%10 == 0:
-                print('Training loss after {} iterations = {} '.format(train_iter, loss_value))
+                line = 'Training loss after {} iterations = {} '.format(train_iter, loss_value)
+                print(line)
+                result_file.write(line + '\n')
         avg_loss = epoch_loss / iterPerEpoch
-        trainAccuracy = (numCorrTrain / trainSamples) * 100
-        print('Average training loss after {} epoch = {} '.format(epoch + 1, avg_loss))
-        print('Training accuracy after {} epoch = {}% '.format(epoch + 1, trainAccuracy))
+        trainAccuracy = (numCorrTrain.to(dev) / trainSamples.to(dev)) * 100
+        line_avg = 'Average training loss after {} epoch = {} '.format(epoch + 1, avg_loss)
+        line_acc = 'Training accuracy after {} epoch = {}% '.format(epoch + 1, trainAccuracy)
+        print(line_avg)
+        print(line_acc)
+        result_file.write(line_avg + '\n' + line_acc + '\n')
 
         if epoch % args.eval_freq == 0 or epoch == args.epochs:
             print('Testing...')
@@ -245,7 +246,7 @@ def main():
             test_samples = 0
             numCorr = 0
             for i, (val_data, val_label, _) in enumerate(target_loader):
-                print('testing inst = {}'.format(i))
+                #print('testing inst = {}'.format(i))
                 test_iter += 1
                 test_samples += val_data.size(0)
                 valdataVariable = val_data.permute(1, 0, 2, 3, 4)
@@ -254,10 +255,13 @@ def main():
                 test_loss_epoch += test_loss.item()
                 _, predicted = torch.max(output_label.data, 1)
                 numCorr += (predicted == val_label.to(dev)).sum()
-            test_accuracy = (numCorr / test_samples) * 100
+            test_accuracy = (numCorr.to(dev) / test_samples.to(dev)) * 100
             avg_test_loss = test_loss_epoch / test_iter
-            print('Test Loss after {} epochs, loss = {}'.format(epoch + 1, avg_test_loss))
-            print('Test Accuracy after {} epochs = {}%'.format(epoch + 1, test_accuracy))
+            line_avg = 'Test Loss after {} epochs, loss = {}'.format(epoch + 1, avg_test_loss)
+            line_acc = 'Test Accuracy after {} epochs = {}%'.format(epoch + 1, test_accuracy)
+            print(line_avg)
+            print(line_acc)
+            result_file.write(line_avg + '\n' + line_acc + '\n')
 
             if test_accuracy > best_acc:
                 best_acc = test_accuracy
@@ -269,19 +273,10 @@ def main():
     # --- write the total time to log files ---#
     line_time = 'total time: {:.3f} '.format(end_train - start_train)
     print(line_time)
-    # train_file.write(line_time)
-    # train_short_file.write(line_time)
+    result_file.write(end_train + '\n')
 
     # --- close log files ---#
-    train_file.close()
-    train_short_file.close()
-
-    if target_set.labels_available:
-        val_best_file.write('%.3f\n' % best_prec1)
-        # val_file.write(line_time)
-        # val_short_file.write(line_time)
-        val_file.close()
-        val_short_file.close()
+    result_file.close()
 
     if args.tensorboard:
         writer_train.close()
