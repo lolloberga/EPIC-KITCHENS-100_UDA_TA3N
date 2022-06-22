@@ -8,8 +8,8 @@ LEGENDA:
 * TARGET    = test
 '''
 
-ego_path = "/Users/lorenzo/University/Polito/ML and DL/EGO_Project/" # check the path for prextracted model_feature is consistent
-epic_path = "/Users/lorenzo/University/Polito/ML and DL/EPIC-KITCHENS-100_UDA_TA3N/"
+ego_path = "/content/drive/MyDrive/Spatial features/" # check the path for prextracted model_feature is consistent
+epic_path = "/content/drive/MyDrive/Spatial features/"
 
 CURRENT_DOMAIN      = "D3"
 TARGET_DOMAIN       = "D3"
@@ -46,11 +46,11 @@ parser.add_argument('--num_class', type=str, default="8,8")
 parser.add_argument('--modality', type=str, default=CURRENT_MODALITY)
 # choices=['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL'])
 parser.add_argument('--train_source_list', type=str,
-                    default=ego_path + "train_val/" + CURRENT_DOMAIN + "_train.pkl")
+                    default=ego_path + CURRENT_DOMAIN + "_train.pkl")
 parser.add_argument('--train_target_list', type=str,
-                    default=ego_path + "train_val/" + CURRENT_DOMAIN + "_test.pkl")
+                    default=ego_path + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_list', type=str,
-                    default=ego_path + "train_val/" + CURRENT_DOMAIN + "_test.pkl")
+                    default=ego_path + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_data', type=str,
                     default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
                             CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
@@ -63,10 +63,10 @@ parser.add_argument('--train_target_data', type=str,
 
 # === Spatial features (hickle files) ===
 parser.add_argument('--train_source_data_spatial', type=str,
-                    default=epic_path + "spatial_feat/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train_"
+                    default=epic_path + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train_"
                             + CURRENT_MODALITY + '_' + CURRENT_ARCH + "__spatial")
 parser.add_argument('--train_target_data_spatial', type=str,
-                    default=epic_path + "spatial_feat/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_test_"
+                    default=epic_path + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_test_"
                             + CURRENT_MODALITY + '_' + CURRENT_ARCH + "__spatial")
 parser.add_argument('--use_spatial_features', type=str, default=USE_SPATIAL_FEATURES, choices=["N", "Y"])
 
