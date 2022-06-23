@@ -1,6 +1,6 @@
 from torch.autograd import Variable
-import torch_xla
-import torch_xla.core.xla_model as xm
+#import torch_xla
+#import torch_xla.core.xla_model as xm
 from LSTA.ConvLSTACell import *
 from LSTA import resNet
 from tqdm import tqdm
@@ -19,7 +19,7 @@ class attentionModel(nn.Module):
         #todo: implementare ulteriori livelli della rete (Sudakaran email)
 
         # static params use from external methods
-        self.dev                = xm.xla_device()
+        self.dev                = torch.device("cuda:0") #xm.xla_device()
         self.loss_fn            = None
         self.optimizer_fn       = None
         self.optim_scheduler    = None

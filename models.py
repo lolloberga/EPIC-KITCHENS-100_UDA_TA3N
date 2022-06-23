@@ -4,8 +4,8 @@ from torch.nn.init import *
 from torch.autograd import Function
 import torch.nn as nn
 import torch.nn.functional as F
-import torch_xla
-import torch_xla.core.xla_model as xm
+#import torch_xla
+#import torch_xla.core.xla_model as xm
 import torchvision
 import TRNmodule
 import math
@@ -18,7 +18,7 @@ from LSTA.attentionModule import attentionModel
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
 
-dev = xm.xla_device()
+dev = torch.device("cuda:0") #xm.xla_device()
 
 init(autoreset=True)
 

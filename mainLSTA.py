@@ -9,8 +9,8 @@ import torch.backends.cudnn as cudnn
 import torch.optim
 from torch.autograd import Variable
 from torch.nn.utils import clip_grad_norm_
-import torch_xla
-import torch_xla.core.xla_model as xm
+#import torch_xla
+#import torch_xla.core.xla_model as xm
 
 from LSTA.attentionModule import attentionModel
 from dataset import TSNDataSet, TSNSpatialDataSet
@@ -78,7 +78,7 @@ def main():
     print("------------------------------")
 
     # === Setup TPU device ===#
-    dev = xm.xla_device()
+    dev = torch.device("cuda:0")
 
     # determine the categories
     # want to allow multi-label classes.
@@ -273,7 +273,7 @@ def main():
     # --- write the total time to log files ---#
     line_time = 'total time: {:.3f} '.format(end_train - start_train)
     print(line_time)
-    result_file.write(end_train + '\n')
+    result_file.write(line_time + '\n')
 
     # --- close log files ---#
     result_file.close()
