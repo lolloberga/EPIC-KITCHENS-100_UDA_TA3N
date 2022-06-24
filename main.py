@@ -419,10 +419,9 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
     else:
         model.module.partialBN(True)
 
-    ''' * It's not needed, 'cause there is already the TA3N's optimizer
+    #It's not needed, 'cause there is already the TA3N's optimizer
     if args.use_attn == 'LSTA':
         model.module.lsta_model.optim_scheduler.step()
-    '''
 
     # switch to train mode
     model.train()
@@ -565,6 +564,8 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
             _, target_features_avgpool = model.module.lsta_model(targetVariable)
             source_data = source_features_avgpool
             target_data = target_features_avgpool
+            model.module.lsta_model.loss_fn.backward()
+            model.module.lsta_model.optimizer_fn.step()
 
         # ====== forward pass data ======#
         attn_source, out_source, out_source_2, pred_domain_source, feat_source, attn_target, out_target, out_target_2, pred_domain_target, feat_target = model(
