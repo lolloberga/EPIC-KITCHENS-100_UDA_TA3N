@@ -8,8 +8,8 @@ import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
 import torch.optim
 from torch.nn.utils import clip_grad_norm_
-import torch_xla
-import torch_xla.core.xla_model as xm
+#import torch_xla
+#import torch_xla.core.xla_model as xm
 
 from dataset import TSNDataSet, TSNSpatialDataSet
 from models import VideoModel
@@ -82,7 +82,7 @@ def main():
     ####num_class = len(class_names)
 
     # === Setup TPU device ===#
-    dev = xm.xla_device()
+    dev = torch.device("cuda:0") #xm.xla_device()
 
     # New approach
     num_class_str = args.num_class.split(",")

@@ -6,7 +6,7 @@ from LSTA import resNet
 from tqdm import tqdm
 
 class attentionModel(nn.Module):
-    def __init__(self, num_classes=51, mem_size=512, c_cam_classes=1000):
+    def __init__(self, num_classes=51, mem_size=512, c_cam_classes=1000, is_ta3n=False):
         super(attentionModel, self).__init__()
         self.num_classes = num_classes
         #self.resNet = resNet.resnet34(True, True)
@@ -19,6 +19,7 @@ class attentionModel(nn.Module):
         #todo: implementare ulteriori livelli della rete (Sudakaran email)
 
         # static params use from external methods
+        self.is_ta3n            = is_ta3n
         self.dev                = torch.device("cuda:0") #xm.xla_device()
         self.loss_fn            = None
         self.optimizer_fn       = None
@@ -37,7 +38,8 @@ class attentionModel(nn.Module):
 
         feats = self.avgpool(state_inp[0]).view(state_inp[0].size(0), -1)
         logits = self.classifier(feats)
-        #feats = feats.unsqueeze(1).repeat(1, 5, 1) # In order to mantains featurs as TA3N wants
+        if self.is_ta3n: # In order to mantains featurs as TA3N wants
+          feats = feats.unsqueeze(1).repeat(1, 5, 1)
         return logits, feats
 
     # General utils
