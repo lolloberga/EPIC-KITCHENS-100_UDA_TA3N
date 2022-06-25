@@ -167,11 +167,11 @@ parser.add_argument('--copy_list', default=['N', 'N'], type=str, nargs="+",
                     help='duplicate data in case the dataset is relatively small ([copy source list, copy target list])')
 
 # ========================= Monitor Configs ==========================
-parser.add_argument('--print_freq', '-pf', default=1, type=int,
+parser.add_argument('--print_freq', '-pf', default=5, type=int,
                     metavar='N', help='frequency for printing to text files (default: 10)')
-parser.add_argument('--show_freq', '-sf', default=1, type=int,
+parser.add_argument('--show_freq', '-sf', default=5, type=int,
                     metavar='N', help='frequency for showing on the screen (default: 10)')
-parser.add_argument('--eval_freq', '-ef', default=1, type=int,
+parser.add_argument('--eval_freq', '-ef', default=10, type=int,
                     metavar='N', help='evaluation frequency (default: 5)')
 parser.add_argument('--verbose', default=False, action="store_true")
 
