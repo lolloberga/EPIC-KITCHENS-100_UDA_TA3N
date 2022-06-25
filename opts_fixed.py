@@ -18,14 +18,14 @@ CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "none"
 CURRENT_ARCH        = "TSM"
 
-N_EPOCH = 30
+N_EPOCH = 200
 DROP = 0.8
-LEARNING = 3e-2
-BATCH = [32, 32, 64]
+LEARNING = 0.001 #3e-2
+BATCH = [32, 32, 32]
 OPTIMIZ = 'SGD'
-LRN_DECAY = 10
+LRN_DECAY = 0.1
 LRN_ADPT = 'none'
-LRN_STEP = list(range(5, N_EPOCH, 5))
+LRN_STEP = [25, 75, 150] #list(range(5, N_EPOCH, 5))
 LRN_DECAY_WEIGHT = 1e-4
 
 RES = False
