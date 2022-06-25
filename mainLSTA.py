@@ -230,10 +230,10 @@ def main():
         iterPerEpoch = 0
         model.classifier.train(True)
         writer.add_scalar('lr', optimizer_fn.param_groups[0]['lr'], epoch + 1)
-        data_loader = enumerate(zip(source_loader, target_loader))
+        #data_loader = enumerate(zip(source_loader, target_loader))
 
-        for i, ((source_data, source_label, source_id), (target_data, target_label, target_id)) in data_loader:
-            if source_data.size(0) != target_label.size(0):
+        for i, (source_data, source_label, _) in source_loader:
+            if source_data.size(0) != source_label.size(0):
               continue
             train_iter += 1
             iterPerEpoch += 1
@@ -241,11 +241,11 @@ def main():
             trainSamples += source_data.size(2)
             sourceVariable = source_data.permute(1, 0, 2, 3, 4)
             output_label, _ = model(sourceVariable.to(dev))
-            loss = loss_fn(output_label.to(dev), target_label.to(dev))
+            loss = loss_fn(output_label.to(dev), source_label.to(dev))
             loss.backward()
             optimizer_fn.step()
             _, predicted = torch.max(output_label.data, 1)
-            numCorrTrain += (predicted == target_label.to(dev)).sum()
+            numCorrTrain += (predicted == source_label.to(dev)).sum()
             loss_value = loss.item()  # loss.data[0]
             epoch_loss += loss_value
             if train_iter%10 == 0:
