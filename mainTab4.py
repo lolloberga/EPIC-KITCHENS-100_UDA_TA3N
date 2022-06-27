@@ -47,22 +47,26 @@ def main():
                  ['Y', 'Y', 'Y']]
     frame_agg = ['avgpool', 'trn-m']
     use_attn = ['none', 'TransAttn']
+    beta_b =[
+        [0.75,0.75,0.75],]
+    gamma_g = [0.0003,]
 
-    for current in current_d:
-        for target in target_d:
-            if current == target:
-                continue
-            else:
-                for place in place_adv:
-                    for agg in frame_agg:
-                        if place != ['Y', 'Y', 'Y']:
-                            param = [current, target, agg, place, 'none']
-                            mainPt2(param)
-                        else:
-                            for use in use_attn:
-                                param = [current, target, agg, place, use]
-                                mainPt2(param)
-
+    for gg in gamma_g:
+        for bb in beta_b:
+            for current in current_d:
+                for target in target_d:
+                    if current == target:
+                        continue
+                    else:
+                        for place in place_adv:
+                            for agg in frame_agg:
+                                if place != ['Y', 'Y', 'Y']:
+                                    param = [current, target, agg, place, 'none', bb, gg]
+                                    mainPt2(param)
+                                else:
+                                    for use in use_attn:
+                                        param = [current, target, agg, place, use, bb, gg]
+                                        mainPt2(param)
 
 def mainPt2(param):
     global args, writer_train, writer_val
@@ -71,28 +75,36 @@ def mainPt2(param):
     optsParser = OptsParser(param)
     args = optsParser.getParser().parse_args()
 
-    # print(Fore.GREEN + 'Baseline:', args.baseline_type)
-    print(Fore.GREEN + 'Frame aggregation method:', args.frame_aggregation)
-    print(Fore.GREEN + 'Current architecture:', args.arch)
-    # print(Fore.GREEN + 'Num class:', args.num_class)
-    # print(Fore.GREEN + 'target data usage:', args.use_target)
+    print(Fore.GREEN + 'Modality: ', args.modality)
+    print(Fore.GREEN + 'Current Domain: ', args.current_dom, Fore.GREEN + '\tTarget domain: ', args.target_dom)
+    print(Fore.CYAN + 'Arch: ', args.arch)
+    print(Fore.CYAN + 'Frame aggregation: ', args.frame_aggregation)
+    print(Fore.CYAN + 'Optimizer: ', args.optimizer)
+    print(Fore.CYAN + 'Dropout: ', args.dropout_v)
+    print(Fore.GREEN + 'Adversarial: ', args.place_adv)
+    print(Fore.GREEN + 'Attention: ', args.use_attn)
+    print(Fore.GREEN + 'Beta: ', args.beta)
+    print(Fore.GREEN + 'Gamma: ', args.gamma)
+    print(Fore.CYAN + 'Epoch: ', args.epochs)
+    print(Fore.CYAN + 'Batch: ', args.batch_size)
+    print(Fore.CYAN + 'Learning rate: ', args.lr)
 
-    if args.use_target == 'none':
-        print(Fore.GREEN + 'no Domain Adaptation')
-    else:
-        if args.dis_DA != 'none':
-            print(Fore.GREEN + 'Apply the discrepancy-based Domain Adaptation approach:', args.dis_DA)
-            if len(args.place_dis) != args.add_fc + 2:
-                raise ValueError(Back.RED + 'len(place_dis) should be equal to add_fc + 2')
-
-        if args.adv_DA != 'none':
-            print(Fore.GREEN + 'Apply the adversarial-based Domain Adaptation approach:', args.adv_DA)
-
-        if args.use_bn != 'none':
-            print(Fore.GREEN + 'Apply the adaptive normalization approach:', args.use_bn)
-
-    print(Fore.YELLOW + 'Current modality:', args.modality)
-    print(Fore.YELLOW + 'From dataset', args.source_domain, Fore.YELLOW + 'to dataset', args.target_domain)
+    # if args.use_target == 'none':
+    #     print(Fore.GREEN + 'no Domain Adaptation')
+    # else:
+    #     if args.dis_DA != 'none':
+    #         print(Fore.GREEN + 'Apply the discrepancy-based Domain Adaptation approach:', args.dis_DA)
+    #         if len(args.place_dis) != args.add_fc + 2:
+    #             raise ValueError(Back.RED + 'len(place_dis) should be equal to add_fc + 2')
+    #
+    #     if args.adv_DA != 'none':
+    #         print(Fore.GREEN + 'Apply the adversarial-based Domain Adaptation approach:', args.adv_DA)
+    #
+    #     if args.use_bn != 'none':
+    #         print(Fore.GREEN + 'Apply the adaptive normalization approach:', args.use_bn)
+    #
+    # print(Fore.YELLOW + 'Current modality:', args.modality)
+    # print(Fore.YELLOW + 'From dataset', args.source_domain, Fore.YELLOW + 'to dataset', args.target_domain)
 
     # determine the categories
     # want to allow multi-label classes.
@@ -358,7 +370,7 @@ def mainPt2(param):
     if target_set.labels_available:
         val_best_file.write('%.3f\t' % best_prec1 + str(args.source_domain) + '-' + str(args.target_domain) + '\t' +
                             str(args.frame_aggregation) + '\t' + str(args.place_adv) + '\t' +
-                            str(args.use_attn) + '\n')
+                            str(args.use_attn) + '\t' + str(args.beta) + '\t' + str(args.gamma) + '\n')
         # val_file.write(line_time)
         # val_short_file.write(line_time)
         val_file.close()

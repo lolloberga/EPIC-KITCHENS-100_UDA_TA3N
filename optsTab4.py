@@ -31,8 +31,8 @@ class OptsParser:
         ADV = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
         ATTN = param[4]
         LOSS_ATTN = 'none' if ATTN == 'none' else 'attentive_entropy'
-        BETA = [0.75, 0.75, 0.75]
-        GAMMA = 0.003
+        BETA = param[5]
+        GAMMA = param[6]
         # Learning Config ------------------------------------
         EPOCH = 50
         BATCH = [32, 28, 64]
@@ -41,7 +41,7 @@ class OptsParser:
         LRN_ADPT = 'none'
         LRN_STEP = list(range(10,EPOCH,10))
         WEIGHT_DECAY_ = 1e-4
-        
+
        
         # -------------------------------------------------------------------------------------------------------------
         self.parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
