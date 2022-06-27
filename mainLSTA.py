@@ -229,16 +229,18 @@ def main():
         trainSamples = 0
         iterPerEpoch = 0
         model.classifier.train(True)
-        writer.add_scalar('lr', optimizer_fn.param_groups[0]['lr'], epoch + 1)
-        #data_loader = enumerate(zip(source_loader, target_loader))
+        writer.add_scalar('lr', optimizer_fn.param_groups[0]['lr'])
+        print(Fore.CYAN + 'Learning rate: {}'.format(optimizer_fn.param_groups[0]['lr']))
+        data_loader = enumerate(zip(source_loader, target_loader))
 
-        for i, (source_data, source_label, _) in source_loader:
+        for i, ((source_data, source_label, source_id), (target_data, target_label, target_id)) in data_loader:
             if source_data.size(0) != source_label.size(0):
+              print('Skipped for different size: {} {}'.format(source_data.size(0), source_label.size(0)))
               continue
             train_iter += 1
             iterPerEpoch += 1
             optimizer_fn.zero_grad()
-            trainSamples += source_data.size(2)
+            trainSamples += source_data.size(2) #forse .size(1)
             sourceVariable = source_data.permute(1, 0, 2, 3, 4)
             output_label, _ = model(sourceVariable.to(dev))
             loss = loss_fn(output_label.to(dev), source_label.to(dev))
@@ -261,9 +263,9 @@ def main():
         print(line_avg)
         print(line_acc)
         result_file.write(line_avg + '\n' + line_acc + '\n')
-        writer.add_scalar('train/epoch_loss', avg_loss, epoch + 1)
-        writer.add_scalar('train/accuracy', trainAccuracy, epoch + 1)
-        train_log_loss.write('Training loss after {} epoch = {}\n'.format(epoch + 1, avg_loss))
+        writer.add_scalar('train/epoch_loss', avg_loss, epoch)
+        writer.add_scalar('train/accuracy', trainAccuracy, epoch)
+        train_log_loss.write('Training loss after {} epoch = {}\n'.format(epoch, avg_loss))
         train_log_acc.write(line_acc)
 
         if epoch % args.eval_freq == 0 or epoch == args.epochs:
@@ -289,8 +291,8 @@ def main():
             print(line_avg)
             print(line_acc)
             result_file.write(line_avg + '\n' + line_acc + '\n')
-            writer.add_scalar('test/epoch_loss', avg_test_loss, epoch + 1)
-            writer.add_scalar('test/accuracy', test_accuracy, epoch + 1)
+            writer.add_scalar('test/epoch_loss', avg_test_loss, epoch)
+            writer.add_scalar('test/accuracy', test_accuracy, epoch)
             test_log_loss.write(line_avg)
             test_log_acc.write(line_acc)
 
