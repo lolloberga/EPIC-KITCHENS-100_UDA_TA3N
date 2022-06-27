@@ -11,68 +11,72 @@ LEGENDA:
 
 class OptsParser:
     def __init__(self, param):
+        # ---------------------------------------------------
         ego_path = "/home/pol/Desktop/EGO_Project/"
         epic_path = "/home/pol/Desktop/EPIC-KITCHENS-100_UDA_TA3N/"
-
-        CURRENT_DOMAIN = param[0]
-        TARGET_DOMAIN = param[1]
-        FRAME_AGGREGATION = param[2]
-        CURRENT_MODALITY = "RGB"
-        USE_TARGET = "uSv"
-        CURRENT_ARCH = "tsm"
-
-        N_EPOCH = 50
+        N_CLASS = '8,8'
+        MOD = "RGB"
+        CURRENT_DOM = param[0]
+        TARGET_DOM = param[1]
+        # Model Config --------------------------------------
+        TRAIN_METR = 'verb'
+        ARCH = "tsm"
+        FRAME_AGG = param[2]
+        OPT = 'SGD'
         DROP = 0.8
-        LEARNING = 3e-2
-        BATCH = [32, 28, 64]
-        OPTIMIZ = 'SGD'
-        LRN_DECAY = 'noob'
-        LRN_ADPT = 'dann'
-        LRN_STEP = list(range(10,N_EPOCH,10))
-        LRN_DECAY_WEIGHT = 1e-4
-
-        RES = False
-
-        # Used only during DA
+        # RNN -----------------------------------------------
+        # DA Config -----------------------------------------
         PLACE_ADV = param[3]
-        USE_ATTN = param[4]
-        ADV_DA = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
-        LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
-
-
+        USE_TARG = "uSv"
+        ADV = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
+        ATTN = param[4]
+        LOSS_ATTN = 'none' if ATTN == 'none' else 'attentive_entropy'
+        BETA = [0.75, 0.75, 0.75]
+        GAMMA = 0.003
+        # Learning Config ------------------------------------
+        EPOCH = 50
+        BATCH = [32, 28, 64]
+        LRN = 3e-2
+        LRN_DECAY = 10
+        LRN_ADPT = 'none'
+        LRN_STEP = list(range(10,EPOCH,10))
+        WEIGHT_DECAY_ = 1e-4
+        
+       
+        # -------------------------------------------------------------------------------------------------------------
         self.parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
-        self.parser.add_argument('--source_domain', type=str, default=CURRENT_DOMAIN)
-        self.parser.add_argument('--target_domain', type=str, default=TARGET_DOMAIN)
+        self.parser.add_argument('--source_domain', type=str, default=CURRENT_DOM)
+        self.parser.add_argument('--TARGET_DOM', type=str, default=TARGET_DOM)
 
-        self.parser.add_argument('--num_class', type=str, default="8,8")  # 97,300
-        self.parser.add_argument('--modality', type=str, default=CURRENT_MODALITY)
+        self.parser.add_argument('--num_class', type=str, default=N_CLASS)  # 97,300
+        self.parser.add_argument('--modality', type=str, default=MOD)
         # choices=['Audio', 'RGB', 'Flow', 'RGBDiff', 'RGBDiff2', 'RGBDiffplus', 'ALL'])
         self.parser.add_argument('--train_source_list', type=str,
                             # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_source_train.pkl")
-                            default=ego_path + "train_val/" + CURRENT_DOMAIN + "_train.pkl")
+                            default=ego_path + "train_val/" + CURRENT_DOM + "_train.pkl")
         self.parser.add_argument('--train_target_list', type=str,
                             # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_train_timestamps.pkl")
-                            default=ego_path + "train_val/" + TARGET_DOMAIN + "_train.pkl")  # CURRENT
+                            default=ego_path + "train_val/" + TARGET_DOM + "_train.pkl")  # CURRENT
         self.parser.add_argument('--val_list', type=str,
                             # default="I:/Datasets/EgoAction/EPIC-100/annotations/labels_train_test/val/EPIC_100_uda_target_test_timestamps.pkl")
-                            default=ego_path + "train_val/" + TARGET_DOMAIN + "_test.pkl")  # CURRENT
+                            default=ego_path + "train_val/" + TARGET_DOM + "_test.pkl")  # CURRENT
         self.parser.add_argument('--val_data', type=str,
                             # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                            default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
-                                    CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
+                            default=ego_path + "prextracted_model_features/" + MOD + "/ek_" +
+                                    ARCH + "/" + CURRENT_DOM + "-" + TARGET_DOM + "_test")
         self.parser.add_argument('--train_source_data', type=str,
                             # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/source_val")
-                            default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
-                                    CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train")
+                            default=ego_path + "prextracted_model_features/" + MOD + "/ek_" +
+                                    ARCH + "/" + CURRENT_DOM + "-" + CURRENT_DOM + "_train")
         self.parser.add_argument('--train_target_data', type=str,
                             # default="I:/Datasets/EgoAction/EPIC-100/frames_rgb_flow/feature/target_val")
-                            default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
-                                    CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_train")
+                            default=ego_path + "prextracted_model_features/" + MOD + "/ek_" +
+                                    ARCH + "/" + CURRENT_DOM + "-" + TARGET_DOM + "_train")
 
         # ========================= Model Configs ==========================
-        self.parser.add_argument('--train_metric', default="verb", type=str)
+        self.parser.add_argument('--train_metric', default=TRAIN_METR, type=str)
         self.parser.add_argument('--dann_warmup', default=False, action="store_true")
-        self.parser.add_argument('--arch', type=str, default=CURRENT_ARCH.upper(), choices=["TBN", "I3D", "TSM"])
+        self.parser.add_argument('--arch', type=str, default=ARCH.upper(), choices=["TBN", "I3D", "TSM"])
         self.parser.add_argument('--pretrained', type=str, default="none")
         self.parser.add_argument('--num_segments', type=int, default=5)
         self.parser.add_argument('--val_segments', type=int, default=5)
@@ -81,10 +85,10 @@ class OptsParser:
         self.parser.add_argument('--fc_dim', type=int, default=512, help='dimension of added fc')
         self.parser.add_argument('--baseline_type', type=str, default='video',
                             choices=['frame', 'video', 'tsn'])
-        self.parser.add_argument('--frame_aggregation', type=str, default=FRAME_AGGREGATION,
+        self.parser.add_argument('--FRAME_AGG', type=str, default=FRAME_AGG,
                             choices=['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none'],
                             help='aggregation of frame features (none if baseline_type is not video)')
-        self.parser.add_argument('--optimizer', type=str, default=OPTIMIZ, choices=['SGD', 'Adam'])
+        self.parser.add_argument('--OPTer', type=str, default=OPT, choices=['SGD', 'Adam'])
         self.parser.add_argument('--use_opencv', default=False, action="store_true",
                             help='whether to use the opencv transformation')
         self.parser.add_argument('--dropout_i', '--doi', default=0.5, type=float,
@@ -105,20 +109,20 @@ class OptsParser:
 
         # ========================= DA Configs ==========================
         self.parser.add_argument('--share_params', type=str, default='Y', choices=['Y', 'N'])
-        self.parser.add_argument('--use_target', type=str, default=USE_TARGET, choices=['none', 'Sv', 'uSv'],
+        self.parser.add_argument('--USE_TARG', type=str, default=USE_TARG, choices=['none', 'Sv', 'uSv'],
                             help='the method to use target data (not use | supervised | unsupervised)')
         self.parser.add_argument('--dis_DA', type=str, default='none', choices=['none', 'DAN', 'JAN', 'CORAL'],
                             help='discrepancy method for DA')
-        self.parser.add_argument('--adv_DA', type=str, default=ADV_DA, choices=['none', 'RevGrad'],
+        self.parser.add_argument('--ADV', type=str, default=ADV, choices=['none', 'RevGrad'],
                             help='adversarial method for DA')
         self.parser.add_argument('--use_bn', type=str, default='none', choices=['none', 'AdaBN', 'AutoDIAL'],
                             help='normalization-based methods')
         self.parser.add_argument('--ens_DA', type=str, default='none', choices=['none', 'MCD'],
                             help='ensembling-based methods')
-        self.parser.add_argument('--use_attn_frame', type=str, default='none',
+        self.parser.add_argument('--ATTN_frame', type=str, default='none',
                             choices=['none', 'TransAttn', 'general', 'DotProduct'],
                             help='attention-mechanism for frames only')
-        self.parser.add_argument('--use_attn', type=str, default=USE_ATTN,
+        self.parser.add_argument('--ATTN', type=str, default=ATTN,
                             choices=['none', 'TransAttn', 'general', 'DotProduct'],
                             help='attention-mechanism')
         self.parser.add_argument('--n_attn', type=int, default=1, help='number of discriminators for transferable attention')
@@ -128,9 +132,9 @@ class OptsParser:
         self.parser.add_argument('--pred_normalize', type=str, default='N', choices=['Y', 'N'])
         self.parser.add_argument('--alpha', default=0, type=float, metavar='M',
                             help='weighting for the discrepancy loss (use scheduler if < 0)')
-        self.parser.add_argument('--beta', default=[0.75, 0.75, 0.5], type=float, nargs="+", metavar='M',
+        self.parser.add_argument('--beta', default=BETA, type=float, nargs="+", metavar='M',
                             help='weighting for the adversarial loss (use scheduler if < 0; [relation-beta, video-beta, frame-beta])')
-        self.parser.add_argument('--gamma', default=0.003, type=float, metavar='M', # default = 0.3
+        self.parser.add_argument('--gamma', default=GAMMA, type=float, metavar='M', # default = 0.3
                             help='weighting for the entropy loss')
         self.parser.add_argument('--mu', default=0, type=float, metavar='M',
                             help='weighting for ensembling loss (e.g. discrepancy)')
@@ -143,13 +147,13 @@ class OptsParser:
         # ========================= Learning Configs ==========================
         self.parser.add_argument('--pretrain_source', default=False, action="store_true",
                             help='perform source-only training before DA')
-        self.parser.add_argument('--epochs', default=N_EPOCH, type=int, metavar='N',  # 30
+        self.parser.add_argument('--epochs', default=EPOCH, type=int, metavar='N',  # 30
                             help='number of total epochs to run')
         self.parser.add_argument('-b', '--batch_size', default=BATCH, type=int, nargs="+",
                             # [128, 202, 128]   [32, 32, 32]    [32, 28, 64] --->tip: train80 val20 test
                             # parser.add_argument('-b', '--batch_size', default=[64, 101, 64], type=int, nargs="+",
                             metavar='N', help='mini-batch size ([source, target, testing])')
-        self.parser.add_argument('--lr', '--learning_rate', default=LEARNING, type=float,  # 3e-3
+        self.parser.add_argument('--lr', '--learning_rate', default=LRN, type=float,  # 3e-3
                             metavar='LR', help='initial learning rate')
         self.parser.add_argument('--lr_decay', default=LRN_DECAY, # type=float,
                                  metavar='LRDecay', # 10
@@ -159,7 +163,7 @@ class OptsParser:
                             metavar='LRSteps', help='epochs to decay learning rate')
         self.parser.add_argument('--momentum', default=0.9, type=float, metavar='M',
                             help='momentum')
-        self.parser.add_argument('--weight_decay', '--wd', default=LRN_DECAY_WEIGHT, type=float,
+        self.parser.add_argument('--weight_decay', '--wd', default=WEIGHT_DECAY_, type=float,
                             metavar='W', help='weight decay (default: 1e-4)')
         self.parser.add_argument('--clip_gradient', '--gd', default=20, type=float,
                             metavar='W', help='gradient norm clipping (default: disabled)')
@@ -181,9 +185,9 @@ class OptsParser:
         self.parser.add_argument('-j', '--workers', default=4, type=int, metavar='N',  # aumentare workers
                             # parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                             help='number of data loading workers (default: 4)')
-        self.parser.add_argument('--resume', default=RES, type=str, metavar='PATH',
+        self.parser.add_argument('--resume', default=False, type=str, metavar='PATH',
                             help='path to latest checkpoint (default: none)')
-        self.parser.add_argument('--resume_hp', default=RES, action="store_true",
+        self.parser.add_argument('--resume_hp', default=False, action="store_true",
                             help='whether to use the saved hyper-parameters')
         self.parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                             help='evaluate model on validation set')
