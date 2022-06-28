@@ -26,7 +26,7 @@ class attentionModel(nn.Module):
         self.optim_scheduler    = None
 
     def forward(self, features):
-        # Features = Tensor (32, 5, 2048, 7, 7)
+        # Features = Tensor (5, 32, 2048, 7, 7)
         state_att = (Variable(torch.zeros(features.size(1), 1, 7, 7).to(self.dev)),
                      Variable(torch.zeros(features.size(1), 1, 7, 7).to(self.dev)))
         state_inp = (Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).to(self.dev)),
@@ -35,6 +35,8 @@ class attentionModel(nn.Module):
         for t in range(features.size(0)):
             features_reshaped = features[t, :, :, :, :]
             state_att, state_inp, _ = self.lsta_cell(features_reshaped, state_att, state_inp)
+            # aggregare le 5 iterazioni in un'unico tensore (state_inp)
+
 
         feats = self.avgpool(state_inp[0]).view(state_inp[0].size(0), -1)
         logits = self.classifier(feats)

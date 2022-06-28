@@ -478,14 +478,14 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
             target_data = torch.cat((target_data, target_data_dummy))
 
         # add dummy tensors to make sure batch size can be divided by gpu #
-        '''if source_data.size(0) % gpu_count != 0:
+        if source_data.size(0) % gpu_count != 0:
             source_data_dummy = torch.zeros(gpu_count - source_data.size(0) % gpu_count, source_data.size(1),
                                             source_data.size(2))
             source_data = torch.cat((source_data, source_data_dummy))
         if target_data.size(0) % gpu_count != 0:
             target_data_dummy = torch.zeros(gpu_count - target_data.size(0) % gpu_count, target_data.size(1),
                                             target_data.size(2))
-            target_data = torch.cat((target_data, target_data_dummy))'''
+            target_data = torch.cat((target_data, target_data_dummy))
 
         # measure data loading time
         data_time.update(time.time() - end)
@@ -555,17 +555,23 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
 
             optimizer.step()
 
+        loss_lsta = 0
         # ====== forward pass data if is there LSTA======#
         if args.use_attn == 'LSTA':
             model.module.lsta_model.optimizer_fn.zero_grad()
             sourceVariable = source_data.permute(1, 0, 2, 3, 4).to(dev)
             targetVariable = target_data.permute(1, 0, 2, 3, 4).to(dev)
-            _, source_features_avgpool = model.module.lsta_model(sourceVariable)
-            _, target_features_avgpool = model.module.lsta_model(targetVariable)
+            output_label_source, source_features_avgpool = model.module.lsta_model(sourceVariable)
+            # TODO: valutare se usare LSTA anche sul test set
+            output_label_target, target_features_avgpool = model.module.lsta_model(targetVariable)
+
             source_data = source_features_avgpool
             target_data = target_features_avgpool
-            model.module.lsta_model.loss_fn.backward()
-            model.module.lsta_model.optimizer_fn.step()
+
+            loss_source_lsta = model.module.lsta_model.loss_fn(output_label_source.to(dev), source_label.to(dev))
+            loss_target_lsta = model.module.lsta_model.loss_fn(output_label_target.to(dev), target_label.to(dev))
+            loss_lsta = loss_source_lsta + loss_target_lsta
+            #model.module.lsta_model.loss_fn.backward()
 
         # ====== forward pass data ======#
         attn_source, out_source, out_source_2, pred_domain_source, feat_source, attn_target, out_target, out_target_2, pred_domain_target, feat_target = model(
@@ -619,7 +625,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         # ====== calculate the loss function ======#
         # 1. calculate the classification loss
         out_verb = out_source[0].to(dev)
-        out_noun = out_source[1].to(dev)
+        #out_noun = out_source[1].to(dev)
         label_verb = label_source_verb.to(dev)
         #label_noun = label_source_noun
 
@@ -628,7 +634,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         #	out = torch.cat((out, out_target))
         #	label = torch.cat((label, label_target))
 
-        loss_verb = criterion(out_verb, label_verb)
+        loss_verb = criterion(out_verb, label_verb) + loss_lsta
         #loss_noun = criterion(out_noun, label_noun)
         if args.train_metric == "all":
             loss_classification = 0.5 * loss_verb#(loss_verb + loss_noun)
@@ -644,19 +650,10 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         # if args.ens_DA == 'MCD' and args.use_target != 'none':
         #	loss_classification += criterion(out_source_2, label)
 
-        # TODO: da eliminare
-        print('Calcolo minaccioso, size loss_verb {}'.format(loss_verb.shape))
-        summ = count = 0
-        val = loss_verb.item()
-        summ += val * out_verb.size(0)
-        count += out_verb.size(0)
-        avg = summ / count
-
         losses_c_verb.update(loss_verb.item(), out_verb.size(0))  # pytorch 0.4.X
         #losses_c_noun.update(loss_noun.item(), out_noun.size(0))  # pytorch 0.4.X
         loss = loss_classification
         losses_c.update(loss_classification.item(), out_verb.size(0))
-        print('Fine update')
 
         # 2. calculate the loss for DA
         # (I) discrepancy-based approach: discrepancy loss
@@ -815,7 +812,6 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
 
         # compute gradient and do SGD step
         optimizer.zero_grad()
-
         loss.backward()
 
         if args.clip_gradient is not None:
@@ -824,6 +820,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                 print("clipping gradient: {} with coef {}".format(total_norm, args.clip_gradient / total_norm))
 
         optimizer.step()
+        model.module.lsta_model.optimizer_fn.step()
 
         # measure elapsed time
         batch_time.update(time.time() - end)
@@ -953,9 +950,9 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
             val_data = torch.cat((val_data, val_data_dummy))
 
         # add dummy tensors to make sure batch size can be divided by gpu #
-        '''if val_data.size(0) % gpu_count != 0:
+        if val_data.size(0) % gpu_count != 0:
             val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2))
-            val_data = torch.cat((val_data, val_data_dummy))'''
+            val_data = torch.cat((val_data, val_data_dummy))
 
         #val_label_verb = val_label.cuda()
         val_label_verb = val_label.to(dev)
@@ -967,6 +964,12 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
                     -1)  # expand the size for all the frames
                 #val_label_noun_frame = val_label_noun.unsqueeze(1).repeat(1, args.num_segments).view(
                     #-1)  # expand the size for all the frames
+
+            # compute first LSTA forward if present
+            if args.use_attn == 'LSTA':
+                valdataVariable = val_data.permute(1, 0, 2, 3, 4).to(dev)
+                output_label, features_avgpool = model.module.lsta_model(valdataVariable)
+                val_data = features_avgpool
 
             # compute output
             _, _, _, _, _, attn_val, out_val, out_val_2, pred_domain_val, feat_val = model(val_data, val_data,
