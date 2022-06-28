@@ -76,7 +76,7 @@ def mainPt2(param):
     args = optsParser.getParser().parse_args()
 
     print(Fore.GREEN + 'Modality: ', args.modality)
-    print(Fore.GREEN + 'Current Domain: ', args.current_dom, Fore.GREEN + '\tTarget domain: ', args.target_dom)
+    print(Fore.GREEN + 'Current Domain: ', args.source_domain, Fore.GREEN + '\tTarget domain: ', args.target_domain)
     print(Fore.CYAN + 'Arch: ', args.arch)
     print(Fore.CYAN + 'Frame aggregation: ', args.frame_aggregation)
     print(Fore.CYAN + 'Optimizer: ', args.optimizer)

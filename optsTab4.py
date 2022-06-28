@@ -12,8 +12,8 @@ LEGENDA:
 class OptsParser:
     def __init__(self, param):
         # ---------------------------------------------------
-        ego_path = "/home/pol/Desktop/EGO_Project/"
-        epic_path = "/home/pol/Desktop/EPIC-KITCHENS-100_UDA_TA3N/"
+        ego_path = "/content/drive/MyDrive/ego_path/"
+        epic_path = "/EPIC-KITCHENS-100_UDA_TA3N/"
         N_CLASS = '8,8'
         MOD = "RGB"
         CURRENT_DOM = param[0]
@@ -46,7 +46,7 @@ class OptsParser:
         # -------------------------------------------------------------------------------------------------------------
         self.parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
         self.parser.add_argument('--source_domain', type=str, default=CURRENT_DOM)
-        self.parser.add_argument('--TARGET_DOM', type=str, default=TARGET_DOM)
+        self.parser.add_argument('--target_domain', type=str, default=TARGET_DOM)
 
         self.parser.add_argument('--num_class', type=str, default=N_CLASS)  # 97,300
         self.parser.add_argument('--modality', type=str, default=MOD)
@@ -85,10 +85,10 @@ class OptsParser:
         self.parser.add_argument('--fc_dim', type=int, default=512, help='dimension of added fc')
         self.parser.add_argument('--baseline_type', type=str, default='video',
                             choices=['frame', 'video', 'tsn'])
-        self.parser.add_argument('--FRAME_AGG', type=str, default=FRAME_AGG,
+        self.parser.add_argument('--frame_aggregation', type=str, default=FRAME_AGG,
                             choices=['avgpool', 'rnn', 'temconv', 'trn', 'trn-m', 'none'],
                             help='aggregation of frame features (none if baseline_type is not video)')
-        self.parser.add_argument('--OPTer', type=str, default=OPT, choices=['SGD', 'Adam'])
+        self.parser.add_argument('--optimizer', type=str, default=OPT, choices=['SGD', 'Adam'])
         self.parser.add_argument('--use_opencv', default=False, action="store_true",
                             help='whether to use the opencv transformation')
         self.parser.add_argument('--dropout_i', '--doi', default=0.5, type=float,
@@ -109,20 +109,20 @@ class OptsParser:
 
         # ========================= DA Configs ==========================
         self.parser.add_argument('--share_params', type=str, default='Y', choices=['Y', 'N'])
-        self.parser.add_argument('--USE_TARG', type=str, default=USE_TARG, choices=['none', 'Sv', 'uSv'],
+        self.parser.add_argument('--use_target', type=str, default=USE_TARG, choices=['none', 'Sv', 'uSv'],
                             help='the method to use target data (not use | supervised | unsupervised)')
         self.parser.add_argument('--dis_DA', type=str, default='none', choices=['none', 'DAN', 'JAN', 'CORAL'],
                             help='discrepancy method for DA')
-        self.parser.add_argument('--ADV', type=str, default=ADV, choices=['none', 'RevGrad'],
+        self.parser.add_argument('--adv_DA', type=str, default=ADV, choices=['none', 'RevGrad'],
                             help='adversarial method for DA')
         self.parser.add_argument('--use_bn', type=str, default='none', choices=['none', 'AdaBN', 'AutoDIAL'],
                             help='normalization-based methods')
         self.parser.add_argument('--ens_DA', type=str, default='none', choices=['none', 'MCD'],
                             help='ensembling-based methods')
-        self.parser.add_argument('--ATTN_frame', type=str, default='none',
+        self.parser.add_argument('--use_attn_frame', type=str, default='none',
                             choices=['none', 'TransAttn', 'general', 'DotProduct'],
                             help='attention-mechanism for frames only')
-        self.parser.add_argument('--ATTN', type=str, default=ATTN,
+        self.parser.add_argument('--use_attn', type=str, default=ATTN,
                             choices=['none', 'TransAttn', 'general', 'DotProduct'],
                             help='attention-mechanism')
         self.parser.add_argument('--n_attn', type=int, default=1, help='number of discriminators for transferable attention')
