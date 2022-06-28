@@ -32,16 +32,17 @@ class attentionModel(nn.Module):
         state_inp = (Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).to(self.dev)),
                      Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).to(self.dev)))
 
-        for t in range(features.size(0)):
+        state_inp_stack = []
+        for t in tqdm(range(features.size(0))):
             features_reshaped = features[t, :, :, :, :]
             state_att, state_inp, _ = self.lsta_cell(features_reshaped, state_att, state_inp)
-            # aggregare le 5 iterazioni in un'unico tensore (state_inp)
+            state_inp_stack.append(self.avgpool(state_inp[0]).view(state_inp[0].size(0), -1))
 
-
-        feats = self.avgpool(state_inp[0]).view(state_inp[0].size(0), -1)
+        feats = state_inp_stack[-1]
         logits = self.classifier(feats)
         if self.is_ta3n: # In order to mantains featurs as TA3N wants
-          feats = feats.unsqueeze(1).repeat(1, 5, 1)
+            feats = torch.stack(state_inp_stack)
+            feats = feats.permute(1, 0, 2)
         return logits, feats
 
     # General utils
