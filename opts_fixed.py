@@ -11,8 +11,8 @@ LEGENDA:
 ego_path = "/content/drive/MyDrive/EPIC_KITCHEN DATASET/Spatial features/" # check the path for prextracted model_feature is consistent
 epic_path = "/content/drive/MyDrive/EPIC_KITCHEN DATASET/Spatial features/"
 
-CURRENT_DOMAIN      = "D3"
-TARGET_DOMAIN       = "D3"
+CURRENT_DOMAIN      = "D1"
+TARGET_DOMAIN       = "D1"
 FRAME_AGGREGATION   = "trn-m"
 CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "none"
