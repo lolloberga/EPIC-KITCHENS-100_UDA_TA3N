@@ -570,7 +570,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         loss_lsta = 0
         # ====== forward pass data if is there LSTA======#
         if args.use_attn == 'LSTA':
-            model.module.lsta_model.optimizer_fn.zero_grad()
+            #model.module.lsta_model.optimizer_fn.zero_grad()
             sourceVariable = source_data.permute(1, 0, 2, 3, 4).to(dev)
             targetVariable = target_data.permute(1, 0, 2, 3, 4).to(dev)
             output_label_source, source_features_avgpool = model.module.lsta_model(sourceVariable)

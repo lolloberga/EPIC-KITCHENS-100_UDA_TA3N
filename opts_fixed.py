@@ -25,7 +25,8 @@ BATCH = [32, 32, 32]
 OPTIMIZ = 'SGD'
 LRN_DECAY = 0.1
 LRN_ADPT = 'none'
-LRN_STEP = [6, 18, 37] #[25, 75, 150] #list(range(5, N_EPOCH, 5))
+# TODO: dividere gli hyperparams per LSTA da quelli di TA3N
+LRN_STEP = [100, 100, 100] #[25, 75, 150] #list(range(5, N_EPOCH, 5))
 LRN_DECAY_WEIGHT = 1e-4
 
 RES = False
