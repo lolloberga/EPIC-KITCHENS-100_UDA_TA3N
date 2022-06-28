@@ -283,8 +283,8 @@ def main():
     for epoch in range(start_epoch, args.epochs + 1):
         # print parameters of optimizer
         current_state = optimizer.state_dict()
-        print(epoch)
-        print('lr: ', current_state['param_groups'][0]['lr'])
+        print(Fore.GREEN + 'Epoch {}'.format(epoch))
+        print(Fore.GREEN + 'Learning rate: ', current_state['param_groups'][0]['lr'])
 
         ## schedule for parameters
         alpha = 2 / (1 + math.exp(-1 * (epoch) / args.epochs)) - 1 if args.alpha < 0 else args.alpha
