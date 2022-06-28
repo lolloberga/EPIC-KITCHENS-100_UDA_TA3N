@@ -13,7 +13,7 @@ class OptsParser:
     def __init__(self, param):
         # ---------------------------------------------------
         ego_path = "/content/drive/MyDrive/ego_path/"
-        epic_path = "/EPIC-KITCHENS-100_UDA_TA3N/"
+        # epic_path = "/EPIC-KITCHENS-100_UDA_TA3N/"
         N_CLASS = '8,8'
         MOD = "RGB"
         CURRENT_DOM = param[0]
@@ -192,7 +192,7 @@ class OptsParser:
         self.parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                             help='evaluate model on validation set')
         self.parser.add_argument('--exp_path', type=str,
-                            default=epic_path + "model/action-model/",
+                            default= "model/action-model/",
                             help='full path of the experiment folder')
         # parser.add_argument('--gpus', nargs='+', type=int, default=None)
         self.parser.add_argument('--gpus', nargs='+', type=int, default=1)

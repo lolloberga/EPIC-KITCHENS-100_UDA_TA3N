@@ -1,0 +1,12 @@
+Test: [1][0/90]	Time 0.158 (0.158)	Loss 1.9703 (1.9703)	Prec@1 verb 25.000 (25.000)	Prec@1 noun 0.000 (0.000)	Prec@1 action 0.000 (0.000)	Prec@5 verb 78.571 (78.571)	Prec@5 noun0.000 (0.000)	Prec@5 action0.000 (0.000)	
+Test: [1][20/90]	Time 0.023 (0.022)	Loss 1.9167 (1.9116)	Prec@1 verb 32.143 (35.204)	Prec@1 noun 0.000 (0.000)	Prec@1 action 0.000 (0.000)	Prec@5 verb 100.000 (86.735)	Prec@5 noun0.000 (0.000)	Prec@5 action0.000 (0.000)	
+Test: [1][40/90]	Time 0.013 (0.017)	Loss 1.9561 (1.9090)	Prec@1 verb 28.571 (34.146)	Prec@1 noun 0.000 (0.000)	Prec@1 action 0.000 (0.000)	Prec@5 verb 96.429 (89.460)	Prec@5 noun0.000 (0.000)	Prec@5 action0.000 (0.000)	
+Test: [1][60/90]	Time 0.020 (0.015)	Loss 1.9462 (1.9074)	Prec@1 verb 21.429 (33.899)	Prec@1 noun 0.000 (0.000)	Prec@1 action 0.000 (0.000)	Prec@5 verb 85.714 (89.696)	Prec@5 noun0.000 (0.000)	Prec@5 action0.000 (0.000)	
+Test: [1][80/90]	Time 0.010 (0.015)	Loss 1.9089 (1.9069)	Prec@1 verb 32.143 (34.171)	Prec@1 noun 0.000 (0.000)	Prec@1 action 0.000 (0.000)	Prec@5 verb 85.714 (89.903)	Prec@5 noun0.000 (0.000)	Prec@5 action0.000 (0.000)	
+Testing Results: Prec@1 verb 34.028  Prec@1 noun 0.000 Prec@1 action 0.000 Prec@5 verb 90.020 Prec@5 noun 0.000 Prec@5 action 0.000 Loss 1.90787
+Test: [2][0/90]	Time 0.190 (0.190)	Loss 1.8468 (1.8468)	Prec@1 verb 46.429 (46.429)	Prec@1 noun 0.000 (0.000)	Prec@1 action 0.000 (0.000)	Prec@5 verb 96.429 (96.429)	Prec@5 noun0.000 (0.000)	Prec@5 action0.000 (0.000)	
+Test: [2][20/90]	Time 0.005 (0.019)	Loss 1.9557 (1.9241)	Prec@1 verb 32.143 (32.313)	Prec@1 noun 0.000 (0.000)	Prec@1 action 0.000 (0.000)	Prec@5 verb 67.857 (84.524)	Prec@5 noun0.000 (0.000)	Prec@5 action0.000 (0.000)	
+Test: [2][40/90]	Time 0.005 (0.015)	Loss 1.8901 (1.9376)	Prec@1 verb 46.429 (31.446)	Prec@1 noun 0.000 (0.000)	Prec@1 action 0.000 (0.000)	Prec@5 verb 82.143 (83.362)	Prec@5 noun0.000 (0.000)	Prec@5 action0.000 (0.000)	
+Test: [2][60/90]	Time 0.018 (0.014)	Loss 1.8947 (1.9323)	Prec@1 verb 35.714 (32.319)	Prec@1 noun 0.000 (0.000)	Prec@1 action 0.000 (0.000)	Prec@5 verb 89.286 (84.192)	Prec@5 noun0.000 (0.000)	Prec@5 action0.000 (0.000)	
+Test: [2][80/90]	Time 0.016 (0.013)	Loss 1.8955 (1.9290)	Prec@1 verb 32.143 (33.201)	Prec@1 noun 0.000 (0.000)	Prec@1 action 0.000 (0.000)	Prec@5 verb 89.286 (84.347)	Prec@5 noun0.000 (0.000)	Prec@5 action0.000 (0.000)	
+Testing Results: Prec@1 verb 33.347  Prec@1 noun 0.000 Prec@1 action 0.000 Prec@5 verb 84.649 Prec@5 noun 0.000 Prec@5 action 0.000 Loss 1.92808
