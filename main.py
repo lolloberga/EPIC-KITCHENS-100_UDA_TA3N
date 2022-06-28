@@ -454,6 +454,12 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
     attn_epoch_source = torch.Tensor()
     attn_epoch_target = torch.Tensor()
     for i, ((source_data, source_label, source_id), (target_data, target_label, target_id)) in data_loader:
+        #print('Source: {} {}'.format(source_data.size(0), source_label.size(0)))
+        #print('Target: {} {}'.format(target_data.size(0), target_label.size(0)))
+        if source_data.size(0) != source_label.size(0) or target_data.size(0) != target_label.size(0):
+          print('Source - Skipped for different size: {} {}'.format(source_data.size(0), source_label.size(0)))
+          print('Target - Skipped for different size: {} {}'.format(target_data.size(0), target_label.size(0)))
+          continue
         # setup hyperparameters
         p = float(i + start_steps) / total_steps
         beta_dann = 2. / (1. + np.exp(-1.0 * p)) - 1
@@ -471,10 +477,16 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         if batch_source_ori < args.batch_size[0]:
             source_data_dummy = torch.zeros(args.batch_size[0] - batch_source_ori, source_size_ori[1],
                                             source_size_ori[2])
+            if args.use_attn == 'LSTA':
+              source_data_dummy = torch.zeros(args.batch_size[0] - batch_source_ori, source_size_ori[1],
+                                            source_size_ori[2], source_size_ori[3]. ource_size_ori[5])
             source_data = torch.cat((source_data, source_data_dummy))
         if batch_target_ori < args.batch_size[1]:
             target_data_dummy = torch.zeros(args.batch_size[1] - batch_target_ori, target_size_ori[1],
                                             target_size_ori[2])
+            if args.use_attn == 'LSTA':
+              target_data_dummy = torch.zeros(args.batch_size[1] - batch_target_ori, target_size_ori[1],
+                                            target_size_ori[2], target_size_ori[3], target_size_ori[4])
             target_data = torch.cat((target_data, target_data_dummy))
 
         # add dummy tensors to make sure batch size can be divided by gpu #
@@ -569,7 +581,9 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
             target_data = target_features_avgpool
 
             loss_source_lsta = model.module.lsta_model.loss_fn(output_label_source.to(dev), source_label.to(dev))
-            loss_target_lsta = model.module.lsta_model.loss_fn(output_label_target.to(dev), target_label.to(dev))
+            loss_target_lsta = 0
+            if output_label_target.size(0) == target_label.size(0):
+              loss_target_lsta = model.module.lsta_model.loss_fn(output_label_target.to(dev), target_label.to(dev))
             loss_lsta = loss_source_lsta + loss_target_lsta
             #model.module.lsta_model.loss_fn.backward()
 
@@ -625,7 +639,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         # ====== calculate the loss function ======#
         # 1. calculate the classification loss
         out_verb = out_source[0].to(dev)
-        #out_noun = out_source[1].to(dev)
+        out_noun = out_source[1].to(dev)
         label_verb = label_source_verb.to(dev)
         #label_noun = label_source_noun
 
@@ -947,11 +961,15 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
         # add dummy tensors to keep the same batch size for each epoch (for the last epoch)
         if batch_val_ori < args.batch_size[2]:
             val_data_dummy = torch.zeros(args.batch_size[2] - batch_val_ori, val_size_ori[1], val_size_ori[2])
+            if args.use_attn == 'LSTA':
+              val_data_dummy = torch.zeros(args.batch_size[2] - batch_val_ori, val_size_ori[1], val_size_ori[2], val_size_ori[3], val_size_ori[4])
             val_data = torch.cat((val_data, val_data_dummy))
 
         # add dummy tensors to make sure batch size can be divided by gpu #
         if val_data.size(0) % gpu_count != 0:
             val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2))
+            if args.use_attn == 'LSTA':
+              val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2), val_data.size(3), val_data.size(4))
             val_data = torch.cat((val_data, val_data_dummy))
 
         #val_label_verb = val_label.cuda()

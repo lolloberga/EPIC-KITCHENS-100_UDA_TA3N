@@ -626,8 +626,8 @@ class VideoModel(nn.Module):
         pred_domain_all_target = []
     
         # input_data is a list of tensors --> need to do pre-processing
-        feat_base_source = input_source.view(-1, input_source.size()[-1])  # e.g. 256 x 25 x 2048 --> 6400 x 2048
-        feat_base_target = input_target.view(-1, input_target.size()[-1])  # e.g. 256 x 25 x 2048 --> 6400 x 2048
+        feat_base_source = input_source.reshape(-1, input_source.size()[-1])  # e.g. 256 x 25 x 2048 --> 6400 x 2048
+        feat_base_target = input_target.reshape(-1, input_target.size()[-1])  # e.g. 256 x 25 x 2048 --> 6400 x 2048
     
         # === shared layers ===#
         # need to separate BN for source & target ==> otherwise easy to overfit to source data

@@ -33,7 +33,7 @@ class attentionModel(nn.Module):
                      Variable(torch.zeros((features.size(1), self.mem_size, 7, 7)).to(self.dev)))
 
         state_inp_stack = []
-        for t in tqdm(range(features.size(0))):
+        for t in range(features.size(0)):
             features_reshaped = features[t, :, :, :, :]
             state_att, state_inp, _ = self.lsta_cell(features_reshaped, state_att, state_inp)
             state_inp_stack.append(self.avgpool(state_inp[0]).view(state_inp[0].size(0), -1))
@@ -41,8 +41,7 @@ class attentionModel(nn.Module):
         feats = state_inp_stack[-1]
         logits = self.classifier(feats)
         if self.is_ta3n: # In order to mantains featurs as TA3N wants
-            feats = torch.stack(state_inp_stack)
-            feats = feats.permute(1, 0, 2)
+            feats = torch.stack(state_inp_stack, dim=1)
         return logits, feats
 
     # General utils

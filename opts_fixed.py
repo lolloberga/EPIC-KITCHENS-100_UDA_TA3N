@@ -18,14 +18,14 @@ CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "none"
 CURRENT_ARCH        = "TSM"
 
-N_EPOCH = 200
+N_EPOCH = 50
 DROP = 0.8
-LEARNING = 0.001 #3e-2
+LEARNING = 0.01
 BATCH = [32, 32, 32]
 OPTIMIZ = 'SGD'
 LRN_DECAY = 0.1
 LRN_ADPT = 'none'
-LRN_STEP = [25, 75, 150] #list(range(5, N_EPOCH, 5))
+LRN_STEP = [6, 18, 37] #[25, 75, 150] #list(range(5, N_EPOCH, 5))
 LRN_DECAY_WEIGHT = 1e-4
 
 RES = False
@@ -167,11 +167,11 @@ parser.add_argument('--copy_list', default=['N', 'N'], type=str, nargs="+",
                     help='duplicate data in case the dataset is relatively small ([copy source list, copy target list])')
 
 # ========================= Monitor Configs ==========================
-parser.add_argument('--print_freq', '-pf', default=5, type=int,
+parser.add_argument('--print_freq', '-pf', default=10, type=int,
                     metavar='N', help='frequency for printing to text files (default: 10)')
-parser.add_argument('--show_freq', '-sf', default=5, type=int,
+parser.add_argument('--show_freq', '-sf', default=10, type=int,
                     metavar='N', help='frequency for showing on the screen (default: 10)')
-parser.add_argument('--eval_freq', '-ef', default=10, type=int,
+parser.add_argument('--eval_freq', '-ef', default=5, type=int,
                     metavar='N', help='evaluation frequency (default: 5)')
 parser.add_argument('--verbose', default=False, action="store_true")
 
@@ -185,7 +185,7 @@ parser.add_argument('--resume_hp', default=RES, action="store_true",
                     help='whether to use the saved hyper-parameters')
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
-parser.add_argument('--exp_path', type=str, default=epic_path + "LSTA/action-model/",
+parser.add_argument('--exp_path', type=str, default=epic_path + "LSTA_TA3N/action-model/",
                     help='full path of the experiment folder')
 parser.add_argument('--gpus', nargs='+', type=int, default=None)
 parser.add_argument('--flow_prefix', default="", type=str)
