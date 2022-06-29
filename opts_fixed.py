@@ -172,7 +172,7 @@ parser.add_argument('--copy_list', default=['N', 'N'], type=str, nargs="+",
                     metavar='N',
                     help='duplicate data in case the dataset is relatively small ([copy source list, copy target list])')
 
-parser.add_argument('--lr_lsta', '--learning_rate', default=LSTA_LEARNING, type=float,
+parser.add_argument('--lr_lsta', default=LSTA_LEARNING, type=float,
                     metavar='LR', help='initial learning rate')            
 parser.add_argument('--lr_steps_lsta', default=LSTA_LRN_STEP, type=float, nargs="+",
                     metavar='LRSteps', help='epochs to decay learning rate')
