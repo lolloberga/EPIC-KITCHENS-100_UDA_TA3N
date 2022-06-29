@@ -8,11 +8,12 @@ LEGENDA:
 * TARGET    = test
 '''
 
-ego_path = "/content/drive/MyDrive/EPIC_KITCHEN DATASET/Spatial features/" # check the path for prextracted model_feature is consistent
-epic_path = "/content/drive/MyDrive/EPIC_KITCHEN DATASET/Spatial features/"
+ego_path = "/content/drive/MyDrive/ego_path/train_val/"
+epic_path = "/content/drive/MyDrive/ego_path/features_spaziali/"
+feats_vector_path = "/content/drive/MyDrive/ego_path/prextracted_model_features/"
 
 CURRENT_DOMAIN      = "D1"
-TARGET_DOMAIN       = "D1"
+TARGET_DOMAIN       = "D2"
 FRAME_AGGREGATION   = "trn-m"
 CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "none"
@@ -25,7 +26,6 @@ BATCH = [32, 32, 32]
 OPTIMIZ = 'SGD'
 LRN_DECAY = 0.1
 LRN_ADPT = 'none'
-# TODO: dividere gli hyperparams per LSTA da quelli di TA3N
 LRN_STEP = [100, 100, 100] #[25, 75, 150] #list(range(5, N_EPOCH, 5))
 LRN_DECAY_WEIGHT = 1e-4
 
@@ -39,6 +39,11 @@ LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
 USE_SPATIAL_FEATURES = 'Y' if USE_ATTN == 'LSTA' else 'N'
 
 
+# == LSTA CONFIGURATION === #
+LSTA_LEARNING = 0.001
+LSTA_LRN_DECAY = 0.1
+LSTA_LRN_STEP = [100, 100, 100] # look at number of epochs to understand if it'll used or not
+
 parser = argparse.ArgumentParser(description="PyTorch implementation of Temporal Segment Networks")
 parser.add_argument('--source_domain', type=str, default=CURRENT_DOMAIN)
 parser.add_argument('--target_domain', type=str, default=TARGET_DOMAIN)
@@ -49,17 +54,17 @@ parser.add_argument('--modality', type=str, default=CURRENT_MODALITY)
 parser.add_argument('--train_source_list', type=str,
                     default=ego_path + CURRENT_DOMAIN + "_train.pkl")
 parser.add_argument('--train_target_list', type=str,
-                    default=ego_path + CURRENT_DOMAIN + "_test.pkl")
+                    default=ego_path + TARGET_DOMAIN + "_train.pkl")
 parser.add_argument('--val_list', type=str,
                     default=ego_path + CURRENT_DOMAIN + "_test.pkl")
 parser.add_argument('--val_data', type=str,
                     default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
                             CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 parser.add_argument('--train_source_data', type=str,
-                    default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
+                    default=feats_vector_path + CURRENT_MODALITY + "/ek_" +
                             CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train")
 parser.add_argument('--train_target_data', type=str,
-                    default=ego_path + "prextracted_model_features/" + CURRENT_MODALITY + "/ek_" +
+                    default=feats_vector_path + CURRENT_MODALITY + "/ek_" +
                             CURRENT_ARCH + "/" + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_test")
 
 # === Spatial features (hickle files) ===
@@ -67,7 +72,7 @@ parser.add_argument('--train_source_data_spatial', type=str,
                     default=epic_path + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_train_"
                             + CURRENT_MODALITY + '_' + CURRENT_ARCH + "__spatial")
 parser.add_argument('--train_target_data_spatial', type=str,
-                    default=epic_path + CURRENT_DOMAIN + "-" + CURRENT_DOMAIN + "_test_"
+                    default=epic_path + CURRENT_DOMAIN + "-" + TARGET_DOMAIN + "_train_"
                             + CURRENT_MODALITY + '_' + CURRENT_ARCH + "__spatial")
 parser.add_argument('--use_spatial_features', type=str, default=USE_SPATIAL_FEATURES, choices=["N", "Y"])
 
@@ -166,6 +171,12 @@ parser.add_argument('--no_partialbn', '--npb', default=True, action="store_true"
 parser.add_argument('--copy_list', default=['N', 'N'], type=str, nargs="+",
                     metavar='N',
                     help='duplicate data in case the dataset is relatively small ([copy source list, copy target list])')
+
+parser.add_argument('--lr_lsta', '--learning_rate', default=LSTA_LEARNING, type=float,
+                    metavar='LR', help='initial learning rate')            
+parser.add_argument('--lr_steps_lsta', default=LSTA_LRN_STEP, type=float, nargs="+",
+                    metavar='LRSteps', help='epochs to decay learning rate')
+parser.add_argument('--lr_decay_lsta', default=LSTA_LRN_DECAY, type=float, metavar='LRDecay', help='decay factor for learning rate')
 
 # ========================= Monitor Configs ==========================
 parser.add_argument('--print_freq', '-pf', default=10, type=int,

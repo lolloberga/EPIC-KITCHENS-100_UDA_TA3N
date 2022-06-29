@@ -277,8 +277,8 @@ def main():
         model.module.lsta_model.to(dev)
         # Initial setup
         model.module.lsta_model.set_loss_fn(nn.CrossEntropyLoss().to(dev))
-        model.module.lsta_model.set_optimizer_fn(torch.optim.Adam(train_params, lr=args.lr, weight_decay=5e-4, eps=1e-4))
-        model.module.lsta_model.set_optim_scheduler(torch.optim.lr_scheduler.MultiStepLR(model.module.lsta_model.optimizer_fn, milestones=args.lr_steps, gamma=args.lr_decay))
+        model.module.lsta_model.set_optimizer_fn(torch.optim.Adam(train_params, lr=args.lr_lsta, weight_decay=5e-4, eps=1e-4))
+        model.module.lsta_model.set_optim_scheduler(torch.optim.lr_scheduler.MultiStepLR(model.module.lsta_model.optimizer_fn, milestones=args.lr_steps_lsta, gamma=args.lr_decay_lsta))
 
     for epoch in range(start_epoch, args.epochs + 1):
         # print parameters of optimizer
@@ -570,11 +570,10 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         loss_lsta = 0
         # ====== forward pass data if is there LSTA======#
         if args.use_attn == 'LSTA':
-            #model.module.lsta_model.optimizer_fn.zero_grad()
+            model.module.lsta_model.optimizer_fn.zero_grad()
             sourceVariable = source_data.permute(1, 0, 2, 3, 4).to(dev)
             targetVariable = target_data.permute(1, 0, 2, 3, 4).to(dev)
             output_label_source, source_features_avgpool = model.module.lsta_model(sourceVariable)
-            # TODO: valutare se usare LSTA anche sul test set
             output_label_target, target_features_avgpool = model.module.lsta_model(targetVariable)
 
             source_data = source_features_avgpool
