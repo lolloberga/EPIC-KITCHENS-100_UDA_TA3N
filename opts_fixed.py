@@ -35,13 +35,14 @@ RES = False
 
 # Used only during DA
 PLACE_ADV = ['N', 'N', 'N']
-USE_ATTN = 'LSTA' # ['none', 'TransAttn', 'general', 'DotProduct', 'LSTA']
+USE_ATTN = 'TransAttn' # ['none', 'TransAttn', 'general', 'DotProduct']
 ADV_DA = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
 LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
-USE_SPATIAL_FEATURES = 'Y' if USE_ATTN == 'LSTA' else 'N'
 
 
 # == LSTA CONFIGURATION === #
+USE_LSTA = 'Y'
+USE_SPATIAL_FEATURES = 'Y' if USE_LSTA == 'Y' else 'N'
 LSTA_LEARNING = 0.001
 LSTA_LRN_DECAY = 0.1
 LSTA_LRN_STEP = [100, 100, 100] # look at number of epochs to understand if it'll used or not
@@ -79,6 +80,7 @@ parser.add_argument('--train_target_data_spatial', type=str,
 parser.add_argument('--use_spatial_features', type=str, default=USE_SPATIAL_FEATURES, choices=["N", "Y"])
 
 # ========================= Model Configs ==========================
+parser.add_argument('--use_lsta', default=USE_LSTA, type=str)
 parser.add_argument('--train_metric', default="verb", type=str)
 parser.add_argument('--dann_warmup', default=False, action="store_true")
 parser.add_argument('--arch', type=str, default=CURRENT_ARCH.upper(), choices=["TBN", "I3D", "TSM"])
