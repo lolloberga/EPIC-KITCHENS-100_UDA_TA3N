@@ -20,10 +20,11 @@ class attentionModel(nn.Module):
 
         # static params use from external methods
         self.is_with_ta3n       = is_with_ta3n
-        self.dev                = torch.device("cuda:0") #xm.xla_device()
+        self.dev                = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") #xm.xla_device()
         self.loss_fn            = None
         self.optimizer_fn       = None
         self.optim_scheduler    = None
+        print('LSTA device in using: ', str(self.dev))
 
     def forward(self, features):
         # Features = Tensor (5, 32, 2048, 7, 7)

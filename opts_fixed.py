@@ -8,12 +8,12 @@ LEGENDA:
 * TARGET    = test
 '''
 
-ego_path = "/content/drive/MyDrive/ego_path/train_val/"
-epic_path = "/content/drive/MyDrive/ego_path/features_spaziali/"
+ego_path = "/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/"
+epic_path = "/Users/lorenzo/University/Polito/ML and DL/EPIC-KITCHENS-100_UDA_TA3N/spatial_feat/"
 feats_vector_path = "/content/drive/MyDrive/ego_path/prextracted_model_features/"
 
-CURRENT_DOMAIN      = "D1"
-TARGET_DOMAIN       = "D2"
+CURRENT_DOMAIN      = "D3"
+TARGET_DOMAIN       = "D1"
 FRAME_AGGREGATION   = "trn-m"
 CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "none"

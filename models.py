@@ -18,7 +18,7 @@ from LSTA.attentionModule import attentionModel
 torch.manual_seed(1)
 torch.cuda.manual_seed_all(1)
 
-dev = torch.device("cuda:0")  # xm.xla_device()
+dev = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")  # xm.xla_device()
 
 init(autoreset=True)
 
@@ -128,6 +128,7 @@ class VideoModel(nn.Module):
         self._enable_pbn = partial_bn
         if partial_bn:
             self.partialBN(True)
+        print('TA3N device in using: ', str(dev))
 
 
     def _prepare_DA(self, num_class, base_model, modality):  # convert the model to DA framework

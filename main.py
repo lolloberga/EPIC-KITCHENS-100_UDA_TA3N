@@ -82,7 +82,8 @@ def main():
     ####num_class = len(class_names)
 
     # === Setup TPU device ===#
-    dev = torch.device("cuda:0") #xm.xla_device()
+    dev = torch.device("cuda:0" if torch.cuda.is_available() else "cpu") #xm.xla_device()
+    print(Fore.GREEN + 'Device in using: ', str(dev))
 
     # New approach
     num_class_str = args.num_class.split(",")
@@ -263,7 +264,7 @@ def main():
     attn_source_all = torch.Tensor()
     attn_target_all = torch.Tensor()
 
-    if args.use_lsta == 'y': # Some default configurations are needed
+    if args.use_lsta == 'Y': # Some default configurations are needed
         train_params = []
         model.module.lsta_model.train(False)
         for params in model.module.lsta_model.parameters():
@@ -420,7 +421,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         model.module.partialBN(True)
 
     #It's not needed, 'cause there is already the TA3N's optimizer
-    if args.use_lsta == 'y':
+    if args.use_lsta == 'Y':
         model.module.lsta_model.optim_scheduler.step()
 
     # switch to train mode
@@ -477,26 +478,30 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         if batch_source_ori < args.batch_size[0]:
             source_data_dummy = torch.zeros(args.batch_size[0] - batch_source_ori, source_size_ori[1],
                                             source_size_ori[2])
-            if args.use_lsta == 'y':
+            if args.use_lsta == 'Y':
               source_data_dummy = torch.zeros(args.batch_size[0] - batch_source_ori, source_size_ori[1],
                                             source_size_ori[2], source_size_ori[3]. ource_size_ori[5])
             source_data = torch.cat((source_data, source_data_dummy))
         if batch_target_ori < args.batch_size[1]:
             target_data_dummy = torch.zeros(args.batch_size[1] - batch_target_ori, target_size_ori[1],
                                             target_size_ori[2])
-            if args.use_lsta == 'y':
+            if args.use_lsta == 'Y':
               target_data_dummy = torch.zeros(args.batch_size[1] - batch_target_ori, target_size_ori[1],
                                             target_size_ori[2], target_size_ori[3], target_size_ori[4])
             target_data = torch.cat((target_data, target_data_dummy))
 
         # add dummy tensors to make sure batch size can be divided by gpu #
-        if source_data.size(0) % gpu_count != 0:
+        if gpu_count != 0 and source_data.size(0) % gpu_count != 0:
             source_data_dummy = torch.zeros(gpu_count - source_data.size(0) % gpu_count, source_data.size(1),
                                             source_data.size(2))
+            if args.use_lsta == 'Y':
+                source_data_dummy = torch.zeros(gpu_count - source_data.size(0) % gpu_count, source_data.size(1), source_data.size(2), source_data.size(3), source_data.size(4))
             source_data = torch.cat((source_data, source_data_dummy))
-        if target_data.size(0) % gpu_count != 0:
+        if gpu_count != 0 and target_data.size(0) % gpu_count != 0:
             target_data_dummy = torch.zeros(gpu_count - target_data.size(0) % gpu_count, target_data.size(1),
                                             target_data.size(2))
+            if args.use_lsta == 'Y':
+                target_data_dummy = torch.zeros(gpu_count - target_data.size(0) % gpu_count, target_data.size(1), target_data.size(2), target_data.size(3), target_data.size(4))
             target_data = torch.cat((target_data, target_data_dummy))
 
         # measure data loading time
@@ -569,7 +574,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
 
         loss_lsta = 0
         # ====== forward pass data if is there LSTA======#
-        if args.use_lsta == 'y':
+        if args.use_lsta == 'Y':
             model.module.lsta_model.optimizer_fn.zero_grad()
             sourceVariable = source_data.permute(1, 0, 2, 3, 4).to(dev)
             targetVariable = target_data.permute(1, 0, 2, 3, 4).to(dev)
@@ -965,7 +970,7 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
             val_data = torch.cat((val_data, val_data_dummy))
 
         # add dummy tensors to make sure batch size can be divided by gpu #
-        if val_data.size(0) % gpu_count != 0:
+        if gpu_count != 0 and val_data.size(0) % gpu_count != 0:
             val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2))
             if args.use_lsta == 'Y':
               val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2), val_data.size(3), val_data.size(4))
