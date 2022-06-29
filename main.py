@@ -480,7 +480,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                                             source_size_ori[2])
             if args.use_lsta == 'Y':
               source_data_dummy = torch.zeros(args.batch_size[0] - batch_source_ori, source_size_ori[1],
-                                            source_size_ori[2], source_size_ori[3]. source_size_ori[5])
+                                            source_size_ori[2], source_size_ori[3], source_size_ori[4])
             source_data = torch.cat((source_data, source_data_dummy))
         if batch_target_ori < args.batch_size[1]:
             target_data_dummy = torch.zeros(args.batch_size[1] - batch_target_ori, target_size_ori[1],
