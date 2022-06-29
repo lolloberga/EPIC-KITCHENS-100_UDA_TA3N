@@ -21,13 +21,15 @@ CURRENT_ARCH        = "TSM"
 
 N_EPOCH = 50
 DROP = 0.8
-LEARNING = 0.01
-BATCH = [32, 32, 32]
+LEARNING = 0.0003
+BATCH = [32, 28, 64]
 OPTIMIZ = 'SGD'
 LRN_DECAY = 0.1
-LRN_ADPT = 'none'
-LRN_STEP = [100, 100, 100] #[25, 75, 150] #list(range(5, N_EPOCH, 5))
+LRN_ADPT = 'dann'
+LRN_STEP = [100, 100, 100] #list(range(5, N_EPOCH, 5))
 LRN_DECAY_WEIGHT = 1e-4
+BETA = [0.75, 0.75, 0.5]
+GAMMA = 0.0003
 
 RES = False
 
@@ -135,9 +137,9 @@ parser.add_argument('--add_loss_DA', type=str, default='none',
 parser.add_argument('--pred_normalize', type=str, default='N', choices=['Y', 'N'])
 parser.add_argument('--alpha', default=0, type=float, metavar='M',
                     help='weighting for the discrepancy loss (use scheduler if < 0)')
-parser.add_argument('--beta', default=[0.75, 0.75, 0.5], type=float, nargs="+", metavar='M',
+parser.add_argument('--beta', default=BETA, type=float, nargs="+", metavar='M',
                     help='weighting for the adversarial loss (use scheduler if < 0; [relation-beta, video-beta, frame-beta])')
-parser.add_argument('--gamma', default=0.003, type=float, metavar='M',
+parser.add_argument('--gamma', default=GAMMA, type=float, metavar='M',
                     help='weighting for the entropy loss')
 parser.add_argument('--mu', default=0, type=float, metavar='M',
                     help='weighting for ensembling loss (e.g. discrepancy)')
