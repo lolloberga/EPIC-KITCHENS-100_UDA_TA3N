@@ -363,10 +363,10 @@ class VideoModel(nn.Module):
                 nn.Linear(feat_aggregated_dim, 1)
             )
         if self.use_lsta:
-            print('Use LSTA with TA3N: {}'.format(self.is_ta3n))
+            print('Use LSTA with TA3N: {}'.format(self.use_lsta))
             self.lsta_model = attentionModel(num_classes=num_class[0], mem_size=self.mem_size,
                                              c_cam_classes=self.outpool_size,
-                                             is_ta3n=self.is_ta3n)
+                                             is_with_ta3n=self.use_lsta)
 
 
     def train(self, mode=True):
