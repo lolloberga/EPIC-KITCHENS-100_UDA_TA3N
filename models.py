@@ -74,7 +74,7 @@ class VideoModel(nn.Module):
                  crop_num=1, partial_bn=True, verbose=True, add_fc=1, fc_dim=1024,
                  n_rnn=1, rnn_cell='LSTM', n_directions=1, n_ts=5,
                  use_attn='TransAttn', n_attn=1, use_attn_frame='none',
-                 share_params='Y', mem_size=2048, outpool_size=100, is_ta3n=True):
+                 share_params='Y', mem_size=2048, outpool_size=100, use_lsta=True):
         super(VideoModel, self).__init__()
         self.modality = modality
         self.train_segments = train_segments
@@ -91,20 +91,20 @@ class VideoModel(nn.Module):
         self.add_fc = add_fc
         self.fc_dim = fc_dim
         self.share_params = share_params
-        self.is_ta3n = is_ta3n
 
         # RNN
         self.n_layers = n_rnn
         self.rnn_cell = rnn_cell
         self.n_directions = n_directions
         self.n_ts = n_ts  # temporal segment
-        self.mem_size = mem_size
-        self.outpool_size = outpool_size
 
         # Attention
         self.use_attn = use_attn
         self.n_attn = n_attn
         self.use_attn_frame = use_attn_frame
+        self.use_lsta = use_lsta
+        self.mem_size = mem_size
+        self.outpool_size = outpool_size
 
         if new_length is None:
             self.new_length = 1 if modality == "RGB" else 5
@@ -362,7 +362,7 @@ class VideoModel(nn.Module):
                 nn.Tanh(),
                 nn.Linear(feat_aggregated_dim, 1)
             )
-        if self.use_attn == 'LSTA':
+        if self.use_lsta:
             print('Use LSTA with TA3N: {}'.format(self.is_ta3n))
             self.lsta_model = attentionModel(num_classes=num_class[0], mem_size=self.mem_size,
                                              c_cam_classes=self.outpool_size,
@@ -375,7 +375,7 @@ class VideoModel(nn.Module):
         Override the default train() to freeze the BN parameters
         :return:
         """
-        if self.use_attn == 'LSTA':
+        if self.use_lsta:
             self.lsta_model.classifier.train(mode)
         super(VideoModel, self).train(mode)
         count = 0
@@ -732,7 +732,7 @@ class VideoModel(nn.Module):
             pred_fc_domain_video_relation_target = self.domain_classifier_relation(feat_fc_video_relation_target, beta)
     
             # transferable attention
-            if self.use_attn != 'none' and self.use_attn != 'LSTA':  # get the attention weighting
+            if self.use_attn != 'none' and not self.use_lsta:  # get the attention weighting
                 feat_fc_video_relation_source, attn_relation_source = self.get_attn_feat_relation(
                     feat_fc_video_relation_source, pred_fc_domain_video_relation_source, num_segments)
                 feat_fc_video_relation_target, attn_relation_target = self.get_attn_feat_relation(

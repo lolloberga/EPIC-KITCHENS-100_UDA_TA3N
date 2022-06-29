@@ -114,7 +114,7 @@ def main():
                        ens_DA=args.ens_DA if args.use_target != 'none' else 'none',
                        n_rnn=args.n_rnn, rnn_cell=args.rnn_cell, n_directions=args.n_directions, n_ts=args.n_ts,
                        use_attn=args.use_attn, n_attn=args.n_attn, use_attn_frame=args.use_attn_frame,
-                       verbose=args.verbose, share_params=args.share_params, mem_size=args.mem_size, outpool_size=args.outPool_size)
+                       verbose=args.verbose, share_params=args.share_params, mem_size=args.mem_size, outpool_size=args.outPool_size, use_lsta=True if args.use_lsta == 'Y' else False)
 
     model = torch.nn.DataParallel(model, args.gpus).to(dev)
 
@@ -263,7 +263,7 @@ def main():
     attn_source_all = torch.Tensor()
     attn_target_all = torch.Tensor()
 
-    if args.use_attn == 'LSTA': # Some default configurations are needed
+    if args.use_lsta == 'y': # Some default configurations are needed
         train_params = []
         model.module.lsta_model.train(False)
         for params in model.module.lsta_model.parameters():
@@ -420,7 +420,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         model.module.partialBN(True)
 
     #It's not needed, 'cause there is already the TA3N's optimizer
-    if args.use_attn == 'LSTA':
+    if args.use_lsta == 'y':
         model.module.lsta_model.optim_scheduler.step()
 
     # switch to train mode
@@ -477,14 +477,14 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         if batch_source_ori < args.batch_size[0]:
             source_data_dummy = torch.zeros(args.batch_size[0] - batch_source_ori, source_size_ori[1],
                                             source_size_ori[2])
-            if args.use_attn == 'LSTA':
+            if args.use_lsta == 'y':
               source_data_dummy = torch.zeros(args.batch_size[0] - batch_source_ori, source_size_ori[1],
                                             source_size_ori[2], source_size_ori[3]. ource_size_ori[5])
             source_data = torch.cat((source_data, source_data_dummy))
         if batch_target_ori < args.batch_size[1]:
             target_data_dummy = torch.zeros(args.batch_size[1] - batch_target_ori, target_size_ori[1],
                                             target_size_ori[2])
-            if args.use_attn == 'LSTA':
+            if args.use_lsta == 'y':
               target_data_dummy = torch.zeros(args.batch_size[1] - batch_target_ori, target_size_ori[1],
                                             target_size_ori[2], target_size_ori[3], target_size_ori[4])
             target_data = torch.cat((target_data, target_data_dummy))
@@ -569,7 +569,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
 
         loss_lsta = 0
         # ====== forward pass data if is there LSTA======#
-        if args.use_attn == 'LSTA':
+        if args.use_lsta == 'y':
             model.module.lsta_model.optimizer_fn.zero_grad()
             sourceVariable = source_data.permute(1, 0, 2, 3, 4).to(dev)
             targetVariable = target_data.permute(1, 0, 2, 3, 4).to(dev)
@@ -960,14 +960,14 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
         # add dummy tensors to keep the same batch size for each epoch (for the last epoch)
         if batch_val_ori < args.batch_size[2]:
             val_data_dummy = torch.zeros(args.batch_size[2] - batch_val_ori, val_size_ori[1], val_size_ori[2])
-            if args.use_attn == 'LSTA':
+            if args.use_lsta == 'Y':
               val_data_dummy = torch.zeros(args.batch_size[2] - batch_val_ori, val_size_ori[1], val_size_ori[2], val_size_ori[3], val_size_ori[4])
             val_data = torch.cat((val_data, val_data_dummy))
 
         # add dummy tensors to make sure batch size can be divided by gpu #
         if val_data.size(0) % gpu_count != 0:
             val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2))
-            if args.use_attn == 'LSTA':
+            if args.use_lsta == 'Y':
               val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2), val_data.size(3), val_data.size(4))
             val_data = torch.cat((val_data, val_data_dummy))
 
@@ -983,7 +983,7 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
                     #-1)  # expand the size for all the frames
 
             # compute first LSTA forward if present
-            if args.use_attn == 'LSTA':
+            if args.use_lsta == 'Y':
                 valdataVariable = val_data.permute(1, 0, 2, 3, 4).to(dev)
                 output_label, features_avgpool = model.module.lsta_model(valdataVariable)
                 val_data = features_avgpool
