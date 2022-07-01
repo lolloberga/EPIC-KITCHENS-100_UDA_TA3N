@@ -38,7 +38,7 @@ gpu_count = torch.cuda.device_count()
 
 def main():
     # Disposition for Tab4
-    current_d = ['D1', 'D2', 'D3']
+    current_d = ['D2', 'D3']
     target_d = ['D1', 'D2', 'D3']
     place_adv = [['N', 'N', 'N'],
                  ['N', 'N', 'Y'],
