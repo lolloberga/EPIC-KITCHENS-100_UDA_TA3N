@@ -8,12 +8,12 @@ LEGENDA:
 * TARGET    = test
 '''
 
-ego_path = "/content/drive/MyDrive/ego_path/train_val/"
-epic_path = "/content/drive/MyDrive/ego_path/features_spaziali/"
+ego_path = "/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/"
+epic_path = "/Users/lorenzo/University/Polito/ML and DL/EPIC-KITCHENS-100_UDA_TA3N/spatial_feat/"
 feats_vector_path = "/content/drive/MyDrive/ego_path/prextracted_model_features/"
 
 CURRENT_DOMAIN      = "D1"
-TARGET_DOMAIN       = "D3"
+TARGET_DOMAIN       = "D1"
 FRAME_AGGREGATION   = "trn-m"
 CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "uSv"
@@ -150,7 +150,7 @@ parser.add_argument('--mu', default=0, type=float, metavar='M',
 parser.add_argument('--weighted_class_loss_DA', type=str, default='N', choices=['Y', 'N'])
 parser.add_argument('--place_dis', default=['N', 'Y', 'N'], type=str, nargs="+",
                     metavar='N', help='where to place the discrepancy loss (length = add_fc + 2)')
-parser.add_argument('--place_adv', default=['N', 'Y', 'Y'], type=str, nargs="+",
+parser.add_argument('--place_adv', default=PLACE_ADV, type=str, nargs="+",
                     metavar='N', help='[video relation-based adv, video-based adv, frame-based adv]')
 
 # ========================= Learning Configs ==========================
