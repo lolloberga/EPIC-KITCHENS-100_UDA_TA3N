@@ -473,7 +473,7 @@ class VideoModel(nn.Module):
             elif self.rnn_cell == 'LSTA':
                 hidden_init = hidden_temp
     
-            if self.rnn_cell is not 'LSTA':
+            if self.rnn_cell != 'LSTA':
                 self.rnn.flatten_parameters()
             feat_fc_video, hidden_final = self.rnn(feat_fc_video, hidden_init)  # e.g. 16 x 25 x 512
     
