@@ -21,9 +21,9 @@ class OptsParser:
         USE_TARGET = "uSv"
         CURRENT_ARCH = "tsm"
 
-        N_EPOCH = 50
+        N_EPOCH = 100
         DROP = 0.8
-        LEARNING = 3e-2
+        LEARNING = 3e-4
         BATCH = [32, 28, 64]
         OPTIMIZ = 'SGD'
         LRN_DECAY = 'noob'

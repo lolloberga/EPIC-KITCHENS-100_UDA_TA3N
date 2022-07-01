@@ -16,7 +16,7 @@ CURRENT_DOMAIN      = "D1"
 TARGET_DOMAIN       = "D2"
 FRAME_AGGREGATION   = "trn-m"
 CURRENT_MODALITY    = "RGB"
-USE_TARGET          = "none"
+USE_TARGET          = "uSv"
 CURRENT_ARCH        = "TSM"
 
 N_EPOCH = 50
@@ -35,7 +35,9 @@ RES = False
 
 # Used only during DA
 PLACE_ADV = ['N', 'N', 'N']
-USE_ATTN = 'TransAttn' # ['none', 'TransAttn', 'general', 'DotProduct']
+# USE_ATTN SHOULD ALWAYS BE NONE, UNLESS THE SECOND RUN WITH Y Y Y
+# THE SECOND RUN OF Y Y Y SHOULD BE DONE WITH USE_ATTN = TRANSATTN
+USE_ATTN = 'none' # ['none', 'TransAttn', 'general', 'DotProduct']
 ADV_DA = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
 LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
 
@@ -123,7 +125,7 @@ parser.add_argument('--use_target', type=str, default=USE_TARGET, choices=['none
                     help='the method to use target data (not use | supervised | unsupervised)')
 parser.add_argument('--dis_DA', type=str, default='none', choices=['none', 'DAN', 'JAN', 'CORAL'],
                     help='discrepancy method for DA')
-parser.add_argument('--adv_DA', type=str, default='RevGrad', choices=['none', 'RevGrad'],
+parser.add_argument('--adv_DA', type=str, default=ADV_DA, choices=['none', 'RevGrad'],
                     help='adversarial method for DA')
 parser.add_argument('--use_bn', type=str, default='none', choices=['none', 'AdaBN', 'AutoDIAL'],
                     help='normalization-based methods')
@@ -133,7 +135,7 @@ parser.add_argument('--use_attn_frame', type=str, default='none',
 parser.add_argument('--use_attn', type=str, default=USE_ATTN, choices=['none', 'TransAttn', 'general', 'DotProduct', 'LSTA'],
                     help='attention-mechanism')
 parser.add_argument('--n_attn', type=int, default=1, help='number of discriminators for transferable attention')
-parser.add_argument('--add_loss_DA', type=str, default='none',
+parser.add_argument('--add_loss_DA', type=str, default=LOSS_ATTN,
                     choices=['none', 'target_entropy', 'attentive_entropy'],
                     help='add more loss functions for DA')
 parser.add_argument('--pred_normalize', type=str, default='N', choices=['Y', 'N'])
