@@ -1,0 +1,5 @@
+embeddings {
+tensor_name: "validation:00020"
+tensor_path: "00020/validation/tensors.tsv"
+metadata_path: "00020/validation/metadata.tsv"
+}

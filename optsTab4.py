@@ -34,7 +34,7 @@ class OptsParser:
         BETA = param[5]
         GAMMA = param[6]
         # Learning Config ------------------------------------
-        EPOCH = 1000
+        EPOCH = 100
         BATCH = [32, 28, 64]
         LRN = 3e-4
         LRN_DECAY = 10
