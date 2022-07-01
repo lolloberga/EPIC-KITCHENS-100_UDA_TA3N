@@ -316,8 +316,8 @@ def mainPt2(param):
                     raise Exception("invalid metric to train")
 
                 epoch_robustness = epoch / args.epochs
-                epoch_robustness_bool = epoch_robustness >= 0.5
-                if epoch_robustness == 0.5:
+                epoch_robustness_bool = epoch_robustness >= 0.30
+                if epoch_robustness == 0.30:
                     best_prec1 = 0
                 is_best = prec1 > best_prec1
 
