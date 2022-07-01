@@ -48,7 +48,7 @@ def main():
     frame_agg = ['avgpool', 'trn-m']
     use_attn = ['none', 'TransAttn']
     beta_b =[
-        [0.75,0.75,0.75],]
+        [0.75,0.75,0.5],]
     gamma_g = [0.0003,]
 
     for gg in gamma_g:
