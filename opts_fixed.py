@@ -8,12 +8,12 @@ LEGENDA:
 * TARGET    = test
 '''
 
-ego_path = "/Users/lorenzo/University/Polito/ML and DL/EGO_Project/train_val/"
-epic_path = "/Users/lorenzo/University/Polito/ML and DL/EPIC-KITCHENS-100_UDA_TA3N/spatial_feat/"
+ego_path = "/content/drive/MyDrive/ego_path/train_val/"
+epic_path = "/content/drive/MyDrive/ego_path/features_spaziali/"
 feats_vector_path = "/content/drive/MyDrive/ego_path/prextracted_model_features/"
 
 CURRENT_DOMAIN      = "D1"
-TARGET_DOMAIN       = "D1"
+TARGET_DOMAIN       = "D2"
 FRAME_AGGREGATION   = "trn-m"
 CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "uSv"
@@ -28,7 +28,7 @@ LRN_DECAY = 0.1
 LRN_ADPT = 'dann'
 LRN_STEP = [100, 100, 100] #list(range(5, N_EPOCH, 5))
 LRN_DECAY_WEIGHT = 1e-4
-BETA = [0.25, 0.75, 0.5]
+BETA = [0.75, 0.75, 0.5]
 GAMMA = 0.0003
 
 RES = False
@@ -194,7 +194,7 @@ parser.add_argument('--eval_freq', '-ef', default=5, type=int,
 parser.add_argument('--verbose', default=False, action="store_true")
 
 # ========================= Runtime Configs ==========================
-parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
+parser.add_argument('-j', '--workers', default=8, type=int, metavar='N',
                     # parser.add_argument('-j', '--workers', default=0, type=int, metavar='N',
                     help='number of data loading workers (default: 4)')
 parser.add_argument('--resume', default=RES, type=str, metavar='PATH',
