@@ -13,7 +13,7 @@ epic_path = "/content/drive/MyDrive/ego_path/features_spaziali/"
 feats_vector_path = "/content/drive/MyDrive/ego_path/prextracted_model_features/"
 
 CURRENT_DOMAIN      = "D3"
-TARGET_DOMAIN       = "D1"
+TARGET_DOMAIN       = "D2"
 FRAME_AGGREGATION   = "trn-m"
 CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "uSv"

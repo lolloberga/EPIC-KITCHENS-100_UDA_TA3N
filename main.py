@@ -150,12 +150,12 @@ def main():
     cudnn.benchmark = True
 
     # --- open log files ---#
-    if args.resume:
+    # if args.resume:
         # train_file = open(path_exp + 'train.log', 'a')
         # train_short_file = open(path_exp + 'train_short.log', 'a')
         # val_file = open(path_exp + 'val.log', 'a')
         #val_short_file = open(path_exp + 'val_short.log', 'a')
-    else:
+    # else:
         # train_short_file = open(path_exp + 'train_short.log', 'w')
         # val_short_file = open(path_exp + 'val_short.log', 'w')
         # train_file = open(path_exp + 'train.log', 'w')
@@ -384,7 +384,7 @@ def main():
         # val_file.close()
         # val_short_file.close()
 
-    if args.tensorboard:
+    # if args.tensorboard:
         # writer_train.close()
         # writer_val.close()
 
@@ -900,7 +900,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                 top5_action=top5_action,
                 lr=optimizer.param_groups[0]['lr'])
 
-            if i % args.show_freq == 0:
+            # if i % args.show_freq == 0:
                 # print(line)
 
             # log.write('%s\n' % line)
