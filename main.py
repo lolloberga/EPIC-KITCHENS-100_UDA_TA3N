@@ -151,15 +151,15 @@ def main():
 
     # --- open log files ---#
     if args.resume:
-        train_file = open(path_exp + 'train.log', 'a')
-        train_short_file = open(path_exp + 'train_short.log', 'a')
-        val_file = open(path_exp + 'val.log', 'a')
-        val_short_file = open(path_exp + 'val_short.log', 'a')
+        # train_file = open(path_exp + 'train.log', 'a')
+        # train_short_file = open(path_exp + 'train_short.log', 'a')
+        # val_file = open(path_exp + 'val.log', 'a')
+        #val_short_file = open(path_exp + 'val_short.log', 'a')
     else:
-        train_short_file = open(path_exp + 'train_short.log', 'w')
-        val_short_file = open(path_exp + 'val_short.log', 'w')
-        train_file = open(path_exp + 'train.log', 'w')
-        val_file = open(path_exp + 'val.log', 'w')
+        # train_short_file = open(path_exp + 'train_short.log', 'w')
+        # val_short_file = open(path_exp + 'val_short.log', 'w')
+        # train_file = open(path_exp + 'train.log', 'w')
+        # val_file = open(path_exp + 'val.log', 'w')
     val_best_file = open(path_exp + 'best_val_new.txt', 'a')
 
     # === Data loading ===#
@@ -326,8 +326,8 @@ def main():
                     raise Exception("invalid metric to train")
 
                 epoch_robustness = epoch / args.epochs
-                epoch_robustness_bool = epoch_robustness >= 0.5
-                if epoch_robustness == 0.5:
+                epoch_robustness_bool = epoch_robustness >= (3 / 10)
+                if epoch_robustness == (3 / 10):
                     best_prec1 = 0
                 is_best = prec1 > best_prec1
 
@@ -374,19 +374,19 @@ def main():
     # train_short_file.write(line_time)
 
     # --- close log files ---#
-    train_file.close()
-    train_short_file.close()
+    # train_file.close()
+    # train_short_file.close()
 
     if target_set.labels_available:
         val_best_file.write('%.3f\n' % best_prec1)
         # val_file.write(line_time)
         # val_short_file.write(line_time)
-        val_file.close()
-        val_short_file.close()
+        # val_file.close()
+        # val_short_file.close()
 
     if args.tensorboard:
-        writer_train.close()
-        writer_val.close()
+        # writer_train.close()
+        # writer_val.close()
 
     if args.save_attention >= 0:
         np.savetxt('attn_source_' + str(args.save_attention) + '.log', attn_source_all.to(dev).
@@ -901,9 +901,9 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
                 lr=optimizer.param_groups[0]['lr'])
 
             if i % args.show_freq == 0:
-                print(line)
+                # print(line)
 
-            log.write('%s\n' % line)
+            # log.write('%s\n' % line)
 
         # adjust the learning rate for ech step (e.g. DANN)
         if args.lr_adaptive == 'dann':
@@ -938,7 +938,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
     # feat_source_display = feat_source_display[indicies_source]
     # feat_target_display = feat_target_display[indicies_target]
 
-    log_short.write('%s\n' % line)
+    # log_short.write('%s\n' % line)
     return losses_c.avg, attn_epoch_source.mean(0), attn_epoch_target.mean(0)
 
 
@@ -1045,6 +1045,7 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
             #prec1_action, prec5_action = multitask_accuracy((pred_verb.data, pred_noun.data), (label_verb, label_noun),
                                                             #topk=(1, 5))
 
+
             losses.update(loss.item(), out_val[0].size(0))
             top1_verb.update(prec1_verb.item(), out_val[0].size(0))
             top5_verb.update(prec5_verb.item(), out_val[0].size(0))
@@ -1074,9 +1075,9 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
                     top1_action=top1_action, top5_action=top5_action)
 
                 if i % args.show_freq == 0:
-                    print(line)
+                    print("Testing... \n")
 
-                log.write('%s\n' % line)
+                # log.write('%s\n' % line)
 
     if args.tensorboard:  # update the embedding every iteration
         # embedding
@@ -1089,15 +1090,15 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
             tensor_writer.add_embedding(feat_val_display, metadata=label_val_verb_display.data, global_step=epoch,
                                         tag='validation')
 
-    print((
-        'Testing Results: Prec@1 verb {top1_verb.avg:.3f}  Prec@1 noun {top1_noun.avg:.3f} Prec@1 action {top1_action.avg:.3f} Prec@5 verb {top5_verb.avg:.3f} Prec@5 noun {top5_noun.avg:.3f} Prec@5 action {top5_action.avg:.3f} Loss {loss.avg:.5f}'
-            .format(top1_verb=top1_verb, top1_noun=top1_noun, top1_action=top1_action, top5_verb=top5_verb,
-                    top5_noun=top5_noun, top5_action=top5_action, loss=losses)))
+    # print((
+    #     'Testing Results: Prec@1 verb {top1_verb.avg:.3f}  Prec@1 noun {top1_noun.avg:.3f} Prec@1 action {top1_action.avg:.3f} Prec@5 verb {top5_verb.avg:.3f} Prec@5 noun {top5_noun.avg:.3f} Prec@5 action {top5_action.avg:.3f} Loss {loss.avg:.5f}'
+    #         .format(top1_verb=top1_verb, top1_noun=top1_noun, top1_action=top1_action, top5_verb=top5_verb,
+    #                 top5_noun=top5_noun, top5_action=top5_action, loss=losses)))
 
-    log.write((
-        'Testing Results: Prec@1 verb {top1_verb.avg:.3f}  Prec@1 noun {top1_noun.avg:.3f} Prec@1 action {top1_action.avg:.3f} Prec@5 verb {top5_verb.avg:.3f} Prec@5 noun {top5_noun.avg:.3f} Prec@5 action {top5_action.avg:.3f} Loss {loss.avg:.5f}\n'
-            .format(top1_verb=top1_verb, top1_noun=top1_noun, top1_action=top1_action, top5_verb=top5_verb,
-                    top5_noun=top5_noun, top5_action=top5_action, loss=losses)))
+    # log.write((
+    #     'Testing Results: Prec@1 verb {top1_verb.avg:.3f}  Prec@1 noun {top1_noun.avg:.3f} Prec@1 action {top1_action.avg:.3f} Prec@5 verb {top5_verb.avg:.3f} Prec@5 noun {top5_noun.avg:.3f} Prec@5 action {top5_action.avg:.3f} Loss {loss.avg:.5f}\n'
+    #         .format(top1_verb=top1_verb, top1_noun=top1_noun, top1_action=top1_action, top5_verb=top5_verb,
+    #                 top5_noun=top5_noun, top5_action=top5_action, loss=losses)))
 
     return top1_action.avg, top1_verb.avg, top1_noun.avg
 

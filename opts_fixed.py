@@ -12,8 +12,8 @@ ego_path = "/content/drive/MyDrive/ego_path/train_val/"
 epic_path = "/content/drive/MyDrive/ego_path/features_spaziali/"
 feats_vector_path = "/content/drive/MyDrive/ego_path/prextracted_model_features/"
 
-CURRENT_DOMAIN      = "D1"
-TARGET_DOMAIN       = "D2"
+CURRENT_DOMAIN      = "D3"
+TARGET_DOMAIN       = "D1"
 FRAME_AGGREGATION   = "trn-m"
 CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "uSv"
@@ -21,7 +21,7 @@ CURRENT_ARCH        = "TSM"
 
 N_EPOCH = 50
 DROP = 0.8
-LEARNING = 0.0003
+LEARNING = 0.05
 BATCH = [32, 28, 64]
 OPTIMIZ = 'SGD'
 LRN_DECAY = 0.1
@@ -29,7 +29,7 @@ LRN_ADPT = 'dann'
 LRN_STEP = [100, 100, 100] #list(range(5, N_EPOCH, 5))
 LRN_DECAY_WEIGHT = 1e-4
 BETA = [0.75, 0.75, 0.5]
-GAMMA = 0.0003
+GAMMA = 0.03
 
 RES = False
 
