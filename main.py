@@ -150,16 +150,16 @@ def main():
     cudnn.benchmark = True
 
     # --- open log files ---#
-    # if args.resume:
-        # train_file = open(path_exp + 'train.log', 'a')
-        # train_short_file = open(path_exp + 'train_short.log', 'a')
-        # val_file = open(path_exp + 'val.log', 'a')
-        #val_short_file = open(path_exp + 'val_short.log', 'a')
-    # else:
-        # train_short_file = open(path_exp + 'train_short.log', 'w')
-        # val_short_file = open(path_exp + 'val_short.log', 'w')
-        # train_file = open(path_exp + 'train.log', 'w')
-        # val_file = open(path_exp + 'val.log', 'w')
+    if args.resume:
+        train_file = open(path_exp + 'train.log', 'a')
+        train_short_file = open(path_exp + 'train_short.log', 'a')
+        val_file = open(path_exp + 'val.log', 'a')
+        val_short_file = open(path_exp + 'val_short.log', 'a')
+    else:
+        train_short_file = open(path_exp + 'train_short.log', 'w')
+        val_short_file = open(path_exp + 'val_short.log', 'w')
+        train_file = open(path_exp + 'train.log', 'w')
+        val_file = open(path_exp + 'val.log', 'w')
     val_best_file = open(path_exp + 'best_val_new.txt', 'a')
 
     # === Data loading ===#

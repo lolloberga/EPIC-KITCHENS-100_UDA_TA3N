@@ -12,8 +12,8 @@ ego_path = "/content/drive/MyDrive/ego_path/train_val/"
 epic_path = "/content/drive/MyDrive/ego_path/features_spaziali/"
 feats_vector_path = "/content/drive/MyDrive/ego_path/prextracted_model_features/"
 
-CURRENT_DOMAIN      = "D3"
-TARGET_DOMAIN       = "D2"
+CURRENT_DOMAIN      = "D1"
+TARGET_DOMAIN       = "D3"
 FRAME_AGGREGATION   = "trn-m"
 CURRENT_MODALITY    = "RGB"
 USE_TARGET          = "uSv"
@@ -34,10 +34,10 @@ GAMMA = 0.03
 RES = False
 
 # Used only during DA
-PLACE_ADV = ['Y', 'Y', 'Y']
+PLACE_ADV = ['N', 'N', 'N']
 # USE_ATTN SHOULD ALWAYS BE NONE, UNLESS DURING THE SECOND RUN WITH Y Y Y
 # THE SECOND RUN OF Y Y Y SHOULD BE DONE WITH USE_ATTN = TRANSATTN
-USE_ATTN = 'TransAttn' # ['none', 'TransAttn', 'general', 'DotProduct']
+USE_ATTN = 'none' # ['none', 'TransAttn', 'general', 'DotProduct']
 ADV_DA = 'none' if PLACE_ADV == ['N', 'N', 'N'] else 'RevGrad'
 LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
 
