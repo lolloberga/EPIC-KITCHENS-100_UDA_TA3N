@@ -44,7 +44,7 @@ LOSS_ATTN = 'none' if USE_ATTN == 'none' else 'attentive_entropy'
 
 # == LSTA CONFIGURATION === #
 USE_LSTA = 'Y'
-USE_SPATIAL_FEATURES = 'Y' if USE_LSTA == 'Y' else 'N'
+USE_SPATIAL_FEATURES = 'Y' #if USE_LSTA == 'Y' else 'N'
 LSTA_LEARNING = 0.001
 LSTA_LRN_DECAY = 0.1
 LSTA_LRN_STEP = [100, 100, 100] # look at number of epochs to understand if it'll used or not

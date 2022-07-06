@@ -478,14 +478,14 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         if batch_source_ori < args.batch_size[0]:
             source_data_dummy = torch.zeros(args.batch_size[0] - batch_source_ori, source_size_ori[1],
                                             source_size_ori[2])
-            if args.use_lsta == 'Y':
+            if args.use_spatial_features == 'Y':
               source_data_dummy = torch.zeros(args.batch_size[0] - batch_source_ori, source_size_ori[1],
                                             source_size_ori[2], source_size_ori[3], source_size_ori[4])
             source_data = torch.cat((source_data, source_data_dummy))
         if batch_target_ori < args.batch_size[1]:
             target_data_dummy = torch.zeros(args.batch_size[1] - batch_target_ori, target_size_ori[1],
                                             target_size_ori[2])
-            if args.use_lsta == 'Y':
+            if args.use_spatial_features == 'Y':
               target_data_dummy = torch.zeros(args.batch_size[1] - batch_target_ori, target_size_ori[1],
                                             target_size_ori[2], target_size_ori[3], target_size_ori[4])
             target_data = torch.cat((target_data, target_data_dummy))
@@ -494,13 +494,13 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
         if gpu_count != 0 and source_data.size(0) % gpu_count != 0:
             source_data_dummy = torch.zeros(gpu_count - source_data.size(0) % gpu_count, source_data.size(1),
                                             source_data.size(2))
-            if args.use_lsta == 'Y':
+            if args.use_spatial_features == 'Y':
                 source_data_dummy = torch.zeros(gpu_count - source_data.size(0) % gpu_count, source_data.size(1), source_data.size(2), source_data.size(3), source_data.size(4))
             source_data = torch.cat((source_data, source_data_dummy))
         if gpu_count != 0 and target_data.size(0) % gpu_count != 0:
             target_data_dummy = torch.zeros(gpu_count - target_data.size(0) % gpu_count, target_data.size(1),
                                             target_data.size(2))
-            if args.use_lsta == 'Y':
+            if args.use_spatial_features == 'Y':
                 target_data_dummy = torch.zeros(gpu_count - target_data.size(0) % gpu_count, target_data.size(1), target_data.size(2), target_data.size(3), target_data.size(4))
             target_data = torch.cat((target_data, target_data_dummy))
 
@@ -591,6 +591,10 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
               print(Fore.YELLOW + 'Different size in lsta SOURCE: {} {}'.format(output_label_source.shape, source_label.shape))
             loss_lsta = loss_source_lsta
             #model.module.lsta_model.loss_fn.backward()
+        elif args.use_spatial_features == 'Y':
+            # the case in which there is only TA3N but with spatial feats
+            source_data = nn.AvgPool2d(7)(source_data)
+            target_data = nn.AvgPool2d(7)(target_data)
 
         # ====== forward pass data ======#
         attn_source, out_source, out_source_2, pred_domain_source, feat_source, attn_target, out_target, out_target_2, pred_domain_target, feat_target = model(
@@ -966,14 +970,14 @@ def validate(val_loader, model, criterion, num_class, epoch, log, tensor_writer)
         # add dummy tensors to keep the same batch size for each epoch (for the last epoch)
         if batch_val_ori < args.batch_size[2]:
             val_data_dummy = torch.zeros(args.batch_size[2] - batch_val_ori, val_size_ori[1], val_size_ori[2])
-            if args.use_lsta == 'Y':
+            if args.use_spatial_features == 'Y':
               val_data_dummy = torch.zeros(args.batch_size[2] - batch_val_ori, val_size_ori[1], val_size_ori[2], val_size_ori[3], val_size_ori[4])
             val_data = torch.cat((val_data, val_data_dummy))
 
         # add dummy tensors to make sure batch size can be divided by gpu #
         if gpu_count != 0 and val_data.size(0) % gpu_count != 0:
             val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2))
-            if args.use_lsta == 'Y':
+            if args.use_spatial_features == 'Y':
               val_data_dummy = torch.zeros(gpu_count - val_data.size(0) % gpu_count, val_data.size(1), val_data.size(2), val_data.size(3), val_data.size(4))
             val_data = torch.cat((val_data, val_data_dummy))
 
