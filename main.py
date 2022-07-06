@@ -593,8 +593,16 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
             #model.module.lsta_model.loss_fn.backward()
         elif args.use_spatial_features == 'Y':
             # the case in which there is only TA3N but with spatial feats
-            source_data = nn.AvgPool2d(7)(source_data)
-            target_data = nn.AvgPool2d(7)(target_data)
+            sourceVariable = source_data.permute(1, 0, 2, 3, 4).to(dev)
+            targetVariable = target_data.permute(1, 0, 2, 3, 4).to(dev)
+            state_inp_stack = []
+            for t in range(sourceVariable.size(0)):
+                state_inp_stack.append(nn.AvgPool2d(7)(sourceVariable))
+            source_data = torch.stack(state_inp_stack, dim=1)
+            state_inp_stack = []
+            for t in range(targetVariable.size(0)):
+                state_inp_stack.append(nn.AvgPool2d(7)(targetVariable))
+            target_data = torch.stack(state_inp_stack, dim=1)
 
         # ====== forward pass data ======#
         attn_source, out_source, out_source_2, pred_domain_source, feat_source, attn_target, out_target, out_target_2, pred_domain_target, feat_target = model(
