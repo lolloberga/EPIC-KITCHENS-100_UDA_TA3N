@@ -589,12 +589,7 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
               loss_source_lsta = model.module.lsta_model.loss_fn(output_label_source.to(dev), source_label.to(dev))
             else:
               print(Fore.YELLOW + 'Different size in lsta SOURCE: {} {}'.format(output_label_source.shape, source_label.shape))
-            loss_target_lsta = 0
-            if output_label_target.size(0) == target_label.size(0):
-              loss_target_lsta = model.module.lsta_model.loss_fn(output_label_target.to(dev), target_label.to(dev))
-            else:
-              print(Fore.YELLOW + 'Different size in lsta TARGET: {} {}'.format(output_label_source.shape, source_label.shape))
-            loss_lsta = loss_source_lsta + loss_target_lsta
+            loss_lsta = loss_source_lsta
             #model.module.lsta_model.loss_fn.backward()
 
         # ====== forward pass data ======#
