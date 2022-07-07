@@ -579,10 +579,16 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
             sourceVariable = source_data.permute(1, 0, 2, 3, 4).to(dev)
             targetVariable = target_data.permute(1, 0, 2, 3, 4).to(dev)
             output_label_source, source_features_avgpool = model.module.lsta_model(sourceVariable)
-            output_label_target, target_features_avgpool = model.module.lsta_model(targetVariable)
+            #output_label_target, target_features_avgpool = model.module.lsta_model(targetVariable)
 
             source_data = source_features_avgpool
-            target_data = target_features_avgpool
+            #target_data = target_features_avgpool
+
+            state_inp_stack = []
+            for t in range(targetVariable.size(0)):
+                target_reshaped = targetVariable[t, :, :, :, :]
+                state_inp_stack.append(nn.AvgPool2d(7)(target_reshaped).view(target_reshaped.size(0), -1))
+            target_data = torch.stack(state_inp_stack, dim=1)
 
             loss_source_lsta = 0
             if output_label_source.size(0) == source_label.size(0):
@@ -592,16 +598,19 @@ def train(num_class, source_loader, target_loader, model, criterion, criterion_d
             loss_lsta = loss_source_lsta
             #model.module.lsta_model.loss_fn.backward()
         elif args.use_spatial_features == 'Y':
+            print('SONO DOVE NON DEVO ESSERE')
             # the case in which there is only TA3N but with spatial feats
             sourceVariable = source_data.permute(1, 0, 2, 3, 4).to(dev)
             targetVariable = target_data.permute(1, 0, 2, 3, 4).to(dev)
             state_inp_stack = []
             for t in range(sourceVariable.size(0)):
-                state_inp_stack.append(nn.AvgPool2d(7)(sourceVariable))
+                source_reshaped = sourceVariable[t, :, :, :, :]
+                state_inp_stack.append(nn.AvgPool2d(7)(source_reshaped).view(source_reshaped.size(0), -1))
             source_data = torch.stack(state_inp_stack, dim=1)
             state_inp_stack = []
             for t in range(targetVariable.size(0)):
-                state_inp_stack.append(nn.AvgPool2d(7)(targetVariable))
+                target_reshaped = targetVariable[t, :, :, :, :]
+                state_inp_stack.append(nn.AvgPool2d(7)(target_reshaped).view(target_reshaped.size(0), -1))
             target_data = torch.stack(state_inp_stack, dim=1)
 
         # ====== forward pass data ======#
